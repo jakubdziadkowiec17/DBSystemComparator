@@ -26,7 +26,7 @@ namespace DBSystemComparator_API.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, await _errorLogService.CreateErrorLogAsync(ERROR.GETTING_DATA_COUNT_FAILED));
+                return StatusCode(500, _errorLogService.CreateErrorLogAsync(ERROR.GETTING_DATA_COUNT_FAILED));
             }
         }
     }

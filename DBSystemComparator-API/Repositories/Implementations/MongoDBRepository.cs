@@ -34,5 +34,22 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 ReservationServicesCount = (int)reservationServicesCount
             };
         }
+
+        public async Task<List<int>> GetAllRoomIdsAsync()
+        {
+            var roomIdStrings = await _mongoDbContext.Reservations
+                .Find(Builders<ReservationCollection>.Filter.Empty)
+                .Project(r => r.RoomId)
+                .ToListAsync();
+
+            var roomIds = new List<int>();
+            foreach (var roomIdStr in roomIdStrings)
+            {
+                if (int.TryParse(roomIdStr, out int roomId))
+                    roomIds.Add(roomId);
+            }
+
+            return roomIds;
+        }
     }
 }

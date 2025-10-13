@@ -25,12 +25,12 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 return (int)await cmd.ExecuteScalarAsync();
             }
 
-            var clientsCount = await GetCountAsync("Clients");
-            var roomsCount = await GetCountAsync("Rooms");
-            var reservationsCount = await GetCountAsync("Reservations");
-            var paymentsCount = await GetCountAsync("Payments");
-            var servicesCount = await GetCountAsync("Services");
-            var reservationServicesCount = await GetCountAsync("ReservationServices");
+            var clientsCount = await GetCountAsync("clients");
+            var roomsCount = await GetCountAsync("rooms");
+            var reservationsCount = await GetCountAsync("reservations");
+            var paymentsCount = await GetCountAsync("payments");
+            var servicesCount = await GetCountAsync("services");
+            var reservationServicesCount = await GetCountAsync("reservationservices");
 
             return new TablesCountDTO()
             {
@@ -41,6 +41,26 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 ServicesCount = servicesCount,
                 ReservationServicesCount = reservationServicesCount
             };
+        }
+
+        public async Task<List<int>> GetAllRoomIdsAsync()
+        {
+            var roomIds = new List<int>();
+
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            var cmdText = "SELECT roomId FROM reservations;";
+            using var cmd = new SqlCommand(cmdText, connection);
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                if (reader["roomId"] != DBNull.Value)
+                    roomIds.Add(Convert.ToInt32(reader["roomId"]));
+            }
+
+            return roomIds;
         }
     }
 }

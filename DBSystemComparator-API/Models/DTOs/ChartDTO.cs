@@ -2,7 +2,13 @@
 {
     public class ChartDTO
     {
-        public int Month { get; set; }
-        public int Count { get; set; }
+        public int Database { get; set; }
+        public double Result { get; set; }
+
+        public ChartDTO(int database, double result)
+        {
+            Database = database;
+            Result = result;
+        }
     }
 }

@@ -9,14 +9,6 @@ using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// PostgreSQL
-builder.Services.AddDbContext<PostgreSQLDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
-
-// SQL Server
-builder.Services.AddDbContext<SQLServerDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("SQLServer")));
-
 // MongoDB
 builder.Services.AddSingleton<IMongoClient>(sp =>
 {
@@ -53,24 +45,28 @@ builder.Services.AddSingleton<Cassandra.ISession>(sp =>
     return cluster.Connect(cassKeyspace);
 });
 
-builder.Services.AddScoped<IDataCountService, DataCountService>();
-builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
-builder.Services.AddScoped<IScenarioService, ScenarioService>();
-
+// PostgreSQL
 builder.Services.AddScoped<IPostgreSQLRepository>(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
     var connectionString = configuration.GetConnectionString("PostgreSQL");
     return new PostgreSQLRepository(connectionString);
 });
+
+// SQLServer
 builder.Services.AddScoped<ISQLServerRepository>(sp =>
 {
     var configuration = sp.GetRequiredService<IConfiguration>();
     var connectionString = configuration.GetConnectionString("SQLServer");
     return new SQLServerRepository(connectionString);
 });
+
 builder.Services.AddScoped<IMongoDBRepository, MongoDBRepository>();
 builder.Services.AddScoped<ICassandraRepository, CassandraRepository>();
+
+builder.Services.AddScoped<IDataCountService, DataCountService>();
+builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
+builder.Services.AddScoped<IScenarioService, ScenarioService>();
 
 builder.Services.AddControllers();
 

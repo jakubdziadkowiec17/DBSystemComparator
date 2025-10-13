@@ -5,5 +5,6 @@ namespace DBSystemComparator_API.Repositories.Interfaces
     public interface ISQLServerRepository
     {
         Task<TablesCountDTO> GetTablesCountAsync();
+        Task<List<int>> GetAllRoomIdsAsync();
     }
 }

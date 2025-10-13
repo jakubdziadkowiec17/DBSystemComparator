@@ -44,5 +44,22 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 ReservationServicesCount = (int)resServCount
             };
         }
+
+        public async Task<List<int>> GetAllRoomIdsAsync()
+        {
+            var roomIds = new List<int>();
+
+            var query = "SELECT roomId FROM reservations;";
+            var statement = new SimpleStatement(query);
+            var resultSet = await _session.ExecuteAsync(statement);
+
+            foreach (var row in resultSet)
+            {
+                if (row["roomId"] != null)
+                    roomIds.Add(Convert.ToInt32(row["roomId"]));
+            }
+
+            return roomIds;
+        }
     }
 }
