@@ -1,5 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using DBSystemComparator_API.Models.Collections;
 using DBSystemComparator_API.Models.Entities;
+using Microsoft.EntityFrameworkCore;
+using MongoDB.Driver;
 
 namespace DBSystemComparator_API.Database
 {
@@ -54,13 +56,33 @@ namespace DBSystemComparator_API.Database
         }
     }
 
-    public class SqlServerDbContext : ApplicationDbContext
+    public class SQLServerDbContext : ApplicationDbContext
     {
-        public SqlServerDbContext(DbContextOptions<SqlServerDbContext> options) : base(options) { }
+        public SQLServerDbContext(DbContextOptions<SQLServerDbContext> options) : base(options) { }
     }
 
-    public class PostgresDbContext : ApplicationDbContext
+    public class PostgreSQLDbContext : ApplicationDbContext
     {
-        public PostgresDbContext(DbContextOptions<PostgresDbContext> options) : base(options) { }
+        public PostgreSQLDbContext(DbContextOptions<PostgreSQLDbContext> options) : base(options) { }
+    }
+
+    public class MongoDbContext
+    {
+        private readonly IMongoDatabase _mongoDatabase;
+
+        public MongoDbContext(string connectionString, string databaseName)
+        {
+            var client = new MongoClient(connectionString);
+            _mongoDatabase = client.GetDatabase(databaseName);
+        }
+
+        public IMongoDatabase Database => _mongoDatabase;
+
+        public IMongoCollection<ClientCollection> Clients => _mongoDatabase.GetCollection<ClientCollection>("Clients");
+        public IMongoCollection<RoomCollection> Rooms => _mongoDatabase.GetCollection<RoomCollection>("Rooms");
+        public IMongoCollection<ReservationCollection> Reservations => _mongoDatabase.GetCollection<ReservationCollection>("Reservations");
+        public IMongoCollection<PaymentCollection> Payments => _mongoDatabase.GetCollection<PaymentCollection>("Payments");
+        public IMongoCollection<Models.Collections.ServiceCollection> Services => _mongoDatabase.GetCollection<Models.Collections.ServiceCollection>("Services");
+        public IMongoCollection<ReservationServiceCollection> ReservationServices => _mongoDatabase.GetCollection<ReservationServiceCollection>("ReservationServices");
     }
 }

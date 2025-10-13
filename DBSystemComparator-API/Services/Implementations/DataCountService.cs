@@ -6,18 +6,24 @@ namespace DBSystemComparator_API.Services.Implementations
 {
     public class DataCountService : IDataCountService
     {
-        private readonly IDataCountRepository _dataCountRepository;
-        public DataCountService(IDataCountRepository dataCountRepository)
+        private readonly IPostgreSQLRepository _postgreSQLRepository;
+        private readonly ISQLServerRepository _sqlServerRepository;
+        private readonly IMongoDBRepository _mongoDBRepository;
+        private readonly ICassandraRepository _cassandraRepository;
+        public DataCountService(IPostgreSQLRepository postgreSQLRepository, ISQLServerRepository sqlServerRepository, IMongoDBRepository mongoDBRepository, ICassandraRepository cassandraRepository)
         {
-            _dataCountRepository = dataCountRepository;
+            _postgreSQLRepository = postgreSQLRepository;
+            _sqlServerRepository = sqlServerRepository;
+            _mongoDBRepository = mongoDBRepository;
+            _cassandraRepository = cassandraRepository;
         }
 
         public async Task<DataCountDTO> GetDataCountAsync()
         {
-            var tablesCountForSQLServer = await _dataCountRepository.GetTablesCountForSQLServerAsync();
-            var tablesCountForPostgreSQL = await _dataCountRepository.GetTablesCountForPostgreSQLAsync();
-            var tablesCountForMongoDB = await _dataCountRepository.GetTablesCountForMongoDBAsync();
-            var tablesCountForCassandra = await _dataCountRepository.GetTablesCountForCassandraAsync();
+            var tablesCountForPostgreSQL = await _postgreSQLRepository.GetTablesCountAsync();
+            var tablesCountForSQLServer = await _sqlServerRepository.GetTablesCountAsync();
+            var tablesCountForMongoDB = await _mongoDBRepository.GetTablesCountAsync();
+            var tablesCountForCassandra = await _cassandraRepository.GetTablesCountAsync();
 
             return new DataCountDTO()
             {

@@ -10,11 +10,11 @@ using MongoDB.Driver;
 var builder = WebApplication.CreateBuilder(args);
 
 // PostgreSQL
-builder.Services.AddDbContext<PostgresDbContext>(options =>
+builder.Services.AddDbContext<PostgreSQLDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSQL")));
 
 // SQL Server
-builder.Services.AddDbContext<SqlServerDbContext>(options =>
+builder.Services.AddDbContext<SQLServerDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SQLServer")));
 
 // MongoDB
@@ -23,17 +23,18 @@ builder.Services.AddSingleton<IMongoClient>(sp =>
     var mongoConnectionString = builder.Configuration.GetConnectionString("MongoDB");
     return new MongoClient(mongoConnectionString);
 });
-builder.Services.AddScoped(sp =>
+builder.Services.AddSingleton<MongoDbContext>(sp =>
 {
-    var client = sp.GetRequiredService<IMongoClient>();
-    return client.GetDatabase("DBSystemComparator-DB");
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var connectionString = configuration.GetConnectionString("MongoDB");
+    var databaseName = "DBSystemComparator-DB";
+    return new MongoDbContext(connectionString, databaseName);
 });
 
 // Cassandra
 var cassContactPoint = builder.Configuration.GetValue<string>("ConnectionStrings:CassandraContactPoint");
 var cassPort = builder.Configuration.GetValue<int>("ConnectionStrings:CassandraPort");
 var cassKeyspace = builder.Configuration.GetValue<string>("ConnectionStrings:CassandraKeyspace");
-
 builder.Services.AddSingleton<Cassandra.ISession>(sp =>
 {
     var cluster = Cluster.Builder()
@@ -53,12 +54,23 @@ builder.Services.AddSingleton<Cassandra.ISession>(sp =>
 });
 
 builder.Services.AddScoped<IDataCountService, DataCountService>();
-builder.Services.AddScoped<IDataSetService, DataSetService>();
 builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
 builder.Services.AddScoped<IScenarioService, ScenarioService>();
 
-builder.Services.AddScoped<IDataCountRepository, DataCountRepository>();
-builder.Services.AddScoped<IDataSetRepository, DataSetRepository>();
+builder.Services.AddScoped<IPostgreSQLRepository>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var connectionString = configuration.GetConnectionString("PostgreSQL");
+    return new PostgreSQLRepository(connectionString);
+});
+builder.Services.AddScoped<ISQLServerRepository>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    var connectionString = configuration.GetConnectionString("SQLServer");
+    return new SQLServerRepository(connectionString);
+});
+builder.Services.AddScoped<IMongoDBRepository, MongoDBRepository>();
+builder.Services.AddScoped<ICassandraRepository, CassandraRepository>();
 
 builder.Services.AddControllers();
 
@@ -75,16 +87,34 @@ builder.Services.AddCors(a =>
 
 var app = builder.Build();
 
+// PostgreSQL
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<IMongoDatabase>();
-    MongoDbSeeder.CreateCollections(db);
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var connectionString = configuration.GetConnectionString("PostgreSQL");
+    await PostgreSQLSeeder.CreateDatabaseAsync(connectionString);
 }
 
+// SQLServer
+using (var scope = app.Services.CreateScope())
+{
+    var configuration = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var connectionString = configuration.GetConnectionString("SQLServer");
+    await SQLServerSeeder.CreateDatabaseAsync(connectionString);
+}
+
+// MongoDb
+using (var scope = app.Services.CreateScope())
+{
+    var mongoDbContext = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
+    await MongoDbSeeder.CreateCollectionsAndIndexesAsync(mongoDbContext.Database);
+}
+
+// Cassandra
 using (var scope = app.Services.CreateScope())
 {
     var session = scope.ServiceProvider.GetRequiredService<Cassandra.ISession>();
-    CassandraSeeder.CreateTables(session);
+    await CassandraSeeder.CreateTablesAsync(session);
 }
 
 if (app.Environment.IsDevelopment())

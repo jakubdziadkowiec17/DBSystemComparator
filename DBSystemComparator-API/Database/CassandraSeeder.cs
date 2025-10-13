@@ -4,9 +4,9 @@ namespace DBSystemComparator_API.Database
 {
     public static class CassandraSeeder
     {
-        public static void CreateTables(Cassandra.ISession session)
+        public static async Task CreateTablesAsync(Cassandra.ISession session)
         {
-            session.Execute(@"
+            await session.ExecuteAsync(new SimpleStatement(@"
             CREATE TABLE IF NOT EXISTS clients (
                 id int PRIMARY KEY,
                 name text,
@@ -18,9 +18,9 @@ namespace DBSystemComparator_API.Database
                 phonenumber text,
                 isactive boolean
             );
-        ");
+        "));
 
-            session.Execute(@"
+            await session.ExecuteAsync(new SimpleStatement(@"
             CREATE TABLE IF NOT EXISTS rooms (
                 id int PRIMARY KEY,
                 number int,
@@ -28,9 +28,9 @@ namespace DBSystemComparator_API.Database
                 pricepernight int,
                 isactive boolean
             );
-        ");
+        "));
 
-            session.Execute(@"
+            await session.ExecuteAsync(new SimpleStatement(@"
             CREATE TABLE IF NOT EXISTS reservations (
                 id int PRIMARY KEY,
                 clientid int,
@@ -39,9 +39,9 @@ namespace DBSystemComparator_API.Database
                 checkoutdate timestamp,
                 creationdate timestamp
             );
-        ");
+        "));
 
-            session.Execute(@"
+            await session.ExecuteAsync(new SimpleStatement(@"
             CREATE TABLE IF NOT EXISTS payments (
                 id int PRIMARY KEY,
                 reservationid int,
@@ -49,25 +49,25 @@ namespace DBSystemComparator_API.Database
                 sum int,
                 creationdate timestamp
             );
-        ");
+        "));
 
-            session.Execute(@"
+            await session.ExecuteAsync(new SimpleStatement(@"
             CREATE TABLE IF NOT EXISTS services (
                 id int PRIMARY KEY,
                 name text,
                 price int,
                 isactive boolean
             );
-        ");
+        "));
 
-            session.Execute(@"
+            await session.ExecuteAsync(new SimpleStatement(@"
             CREATE TABLE IF NOT EXISTS reservation_services (
                 reservationid int,
                 serviceid int,
                 creationdate timestamp,
                 PRIMARY KEY (reservationid, serviceid)
             );
-        ");
+        "));
         }
     }
 }
