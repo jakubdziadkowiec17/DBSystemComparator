@@ -90,4 +90,20 @@
       </p-tabpanel>
     </p-tabpanels>
   </p-tabs>
+  <div class="mt-6">
+    <p-button (click)="showDialog()" type="submit" [label]="'Generate data for databases'" icon="pi pi-plus" [disabled]="loadingGenerateData" [loading]="loadingGenerateData" styleClass="w-full block" />
+  </div>
+  
+  <p-dialog maskStyleClass="backdrop-blur-sm" header="Data generation" [(visible)]="dialogVisible" [modal]="true" [resizable]="true" [style]="{ width: '32rem' }" (onHide)="hideDialog()">
+    <p-select [options]="[
+        { label: '10 000', value: 10000 },
+        { label: '100 000', value: 100000 },
+        { label: '1 000 000', value: 1000000 }
+      ]" [(ngModel)]="selectedCount" optionLabel="label" optionLabel="label" optionValue="value" class="w-full mt-2 mb-16" />
+    <div class="flex justify-end gap-2 mt-5">
+        <p-button label="Cancel" type="button" (click)="hideDialog()" severity="secondary" icon="pi pi-times"></p-button>
+        <p-button label="Generate" type="button" (click)="generateData(selectedCount)" icon="pi pi-plus" [loading]="loadingGenerateData"></p-button>
+    </div>
+  </p-dialog>
+
 </p-card>

@@ -1,5 +1,6 @@
 using DBSystemComparator_API.Constants;
 using DBSystemComparator_API.Models.DTOs;
+using DBSystemComparator_API.Services.Implementations;
 using DBSystemComparator_API.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,6 +16,19 @@ namespace DBSystemComparator_API.Controllers
         {
             _databaseService = databaseService;
             _errorLogService = errorLogService;
+        }
+
+        [HttpPost("generate-data")]
+        public async Task<ActionResult<ResponseDTO>> GenerateData([FromBody] GenerateDataDTO generateDataDTO)
+        {
+            try
+            {
+                return Ok(await _databaseService.GenerateDataAsync(generateDataDTO));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, _errorLogService.CreateErrorLogAsync(ERROR.GENERATING_DATA_FAILED));
+            }
         }
 
         [HttpGet("tables-count")]

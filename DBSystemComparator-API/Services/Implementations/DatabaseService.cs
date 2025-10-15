@@ -1,4 +1,5 @@
-﻿using DBSystemComparator_API.Models.DTOs;
+﻿using DBSystemComparator_API.Constants;
+using DBSystemComparator_API.Models.DTOs;
 using DBSystemComparator_API.Repositories.Interfaces;
 using DBSystemComparator_API.Services.Interfaces;
 
@@ -32,6 +33,13 @@ namespace DBSystemComparator_API.Services.Implementations
                 MongoDB = tablesCountForMongoDB,
                 Cassandra = tablesCountForCassandra
             };
+        }
+
+        public async Task<ResponseDTO> GenerateDataAsync(GenerateDataDTO generateDataDTO)
+        {
+            
+
+            return new ResponseDTO(SUCCESS.DATA_HAS_BEEN_GENERATED);
         }
     }
 }

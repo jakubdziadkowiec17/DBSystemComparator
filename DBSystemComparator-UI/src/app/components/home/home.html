@@ -1,7 +1,7 @@
 <div class="title">Home</div>
 <div class="home-container">
   <p-card class="w-full max-w-4xl mx-auto">
-    <p-stepper [(value)]="activeStep" class="basis-[40rem]">
+    <p-stepper *ngIf="!loadingScenarios" [(value)]="activeStep" class="basis-[40rem]">
 
       <div class="w-75 mx-auto"><p-step-list>
         <p-step [value]="1" class="flex flex-row flex-auto gap-2">
@@ -161,5 +161,6 @@
           </p-step-panel>
       </p-step-panels>
     </p-stepper>
+    <p-progressSpinner *ngIf="loadingScenarios" />
   </p-card>
 </div>

@@ -5,5 +5,6 @@ namespace DBSystemComparator_API.Services.Interfaces
     public interface IDatabaseService
     {
         Task<DataCountDTO> GetTablesCountForDatabasesAsync();
+        Task<ResponseDTO> GenerateDataAsync(GenerateDataDTO generateDataDTO);
     }
 }

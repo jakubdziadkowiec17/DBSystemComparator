@@ -16,11 +16,12 @@ import { AccordionModule } from 'primeng/accordion';
 import { Operation } from '../../constants/operation';
 import { DB } from '../../constants/db';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [NgIf,CommonModule, NgxChartsModule, ReactiveFormsModule, FormsModule, CardModule, ButtonModule, StepperModule, InputTextModule, ToggleSwitchModule, MessageModule, AccordionModule],
+  imports: [NgIf,CommonModule, NgxChartsModule, ReactiveFormsModule, ProgressSpinnerModule, FormsModule, CardModule, ButtonModule, StepperModule, InputTextModule, ToggleSwitchModule, MessageModule, AccordionModule],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
