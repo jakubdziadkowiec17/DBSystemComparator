@@ -64,7 +64,7 @@ builder.Services.AddScoped<ISQLServerRepository>(sp =>
 builder.Services.AddScoped<IMongoDBRepository, MongoDBRepository>();
 builder.Services.AddScoped<ICassandraRepository, CassandraRepository>();
 
-builder.Services.AddScoped<IDataCountService, DataCountService>();
+builder.Services.AddScoped<IDatabaseService, DatabaseService>();
 builder.Services.AddScoped<IErrorLogService, ErrorLogService>();
 builder.Services.AddScoped<IScenarioService, ScenarioService>();
 

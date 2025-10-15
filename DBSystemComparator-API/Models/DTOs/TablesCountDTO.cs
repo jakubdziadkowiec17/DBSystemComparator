@@ -7,6 +7,6 @@
         public int ReservationsCount { get; set; }
         public int PaymentsCount { get; set; }
         public int ServicesCount { get; set; }
-        public int ReservationServicesCount { get; set; }
+        public int ReservationsServicesCount { get; set; }
     }
 }

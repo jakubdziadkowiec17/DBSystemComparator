@@ -4,13 +4,13 @@ using DBSystemComparator_API.Services.Interfaces;
 
 namespace DBSystemComparator_API.Services.Implementations
 {
-    public class DataCountService : IDataCountService
+    public class DatabaseService : IDatabaseService
     {
         private readonly IPostgreSQLRepository _postgreSQLRepository;
         private readonly ISQLServerRepository _sqlServerRepository;
         private readonly IMongoDBRepository _mongoDBRepository;
         private readonly ICassandraRepository _cassandraRepository;
-        public DataCountService(IPostgreSQLRepository postgreSQLRepository, ISQLServerRepository sqlServerRepository, IMongoDBRepository mongoDBRepository, ICassandraRepository cassandraRepository)
+        public DatabaseService(IPostgreSQLRepository postgreSQLRepository, ISQLServerRepository sqlServerRepository, IMongoDBRepository mongoDBRepository, ICassandraRepository cassandraRepository)
         {
             _postgreSQLRepository = postgreSQLRepository;
             _sqlServerRepository = sqlServerRepository;
@@ -18,7 +18,7 @@ namespace DBSystemComparator_API.Services.Implementations
             _cassandraRepository = cassandraRepository;
         }
 
-        public async Task<DataCountDTO> GetDataCountAsync()
+        public async Task<DataCountDTO> GetTablesCountForDatabasesAsync()
         {
             var tablesCountForPostgreSQL = await _postgreSQLRepository.GetTablesCountAsync();
             var tablesCountForSQLServer = await _sqlServerRepository.GetTablesCountAsync();

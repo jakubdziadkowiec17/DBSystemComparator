@@ -1,6 +1,6 @@
 ﻿namespace DBSystemComparator_API.Constants
 {
-    public enum Db
+    public enum DB
     {
         POSTGRESQL = 1,
         SQLSERVER = 2,

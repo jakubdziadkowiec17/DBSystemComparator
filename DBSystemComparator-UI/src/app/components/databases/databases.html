@@ -1,0 +1,93 @@
+<div class="title">Databases</div>
+<p-card styleClass="w-full max-w-4xl mx-auto">
+  <p-progressSpinner *ngIf="loadingDatabases" />
+  <p-tabs *ngIf="!loadingDatabases" [value]="activeTabIndex" (valueChange)="onTabChange($event)">
+    <p-tablist>
+      <p-tab [value]="0">PostgreSQL</p-tab>
+      <p-tab [value]="1">SQL Server</p-tab>
+      <p-tab [value]="2">MongoDB</p-tab>
+      <p-tab [value]="3">Cassandra</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <p-tabpanel [value]="0">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          <ng-container *ngFor="let item of [
+            { label: 'Clients', value: dataCount.postgreSQL.clientsCount, icon: 'pi pi-users', color: 'text-blue-500' },
+            { label: 'Payments', value: dataCount.postgreSQL.paymentsCount, icon: 'pi pi-credit-card', color: 'text-green-500' },
+            { label: 'Reservations', value: dataCount.postgreSQL.reservationsCount, icon: 'pi pi-calendar', color: 'text-purple-500' },
+            { label: 'ReservationsServices', value: dataCount.postgreSQL.reservationsServicesCount, icon: 'pi pi-link', color: 'text-indigo-500' },
+            { label: 'Rooms', value: dataCount.postgreSQL.roomsCount, icon: 'pi pi-home', color: 'text-orange-500' },
+            { label: 'Services', value: dataCount.postgreSQL.servicesCount, icon: 'pi pi-cog', color: 'text-teal-500' }
+          ]">
+            <p-card class="text-center">
+              <div class="text-lg font-semibold mb-2 flex justify-center items-center gap-2">
+                <i [class]="item.icon + ' ' + item.color"></i> {{ item.label }}
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ item.value }}</div>
+            </p-card>
+          </ng-container>
+        </div>
+      </p-tabpanel>
+
+      <p-tabpanel [value]="1">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          <ng-container *ngFor="let item of [
+            { label: 'Clients', value: dataCount.sqlServer.clientsCount, icon: 'pi pi-users', color: 'text-blue-500' },
+            { label: 'Payments', value: dataCount.sqlServer.paymentsCount, icon: 'pi pi-credit-card', color: 'text-green-500' },
+            { label: 'Reservations', value: dataCount.sqlServer.reservationsCount, icon: 'pi pi-calendar', color: 'text-purple-500' },
+            { label: 'ReservationsServices', value: dataCount.sqlServer.reservationsServicesCount, icon: 'pi pi-link', color: 'text-indigo-500' },
+            { label: 'Rooms', value: dataCount.sqlServer.roomsCount, icon: 'pi pi-home', color: 'text-orange-500' },
+            { label: 'Services', value: dataCount.sqlServer.servicesCount, icon: 'pi pi-cog', color: 'text-teal-500' }
+          ]">
+            <p-card class="text-center">
+              <div class="text-lg font-semibold mb-2 flex justify-center items-center gap-2">
+                <i [class]="item.icon + ' ' + item.color"></i> {{ item.label }}
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ item.value }}</div>
+            </p-card>
+          </ng-container>
+        </div>
+      </p-tabpanel>
+
+      <p-tabpanel [value]="2">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          <ng-container *ngFor="let item of [
+            { label: 'Clients', value: dataCount.mongoDB.clientsCount, icon: 'pi pi-users', color: 'text-blue-500' },
+            { label: 'Payments', value: dataCount.mongoDB.paymentsCount, icon: 'pi pi-credit-card', color: 'text-green-500' },
+            { label: 'Reservations', value: dataCount.mongoDB.reservationsCount, icon: 'pi pi-calendar', color: 'text-purple-500' },
+            { label: 'ReservationsServices', value: dataCount.mongoDB.reservationsServicesCount, icon: 'pi pi-link', color: 'text-indigo-500' },
+            { label: 'Rooms', value: dataCount.mongoDB.roomsCount, icon: 'pi pi-home', color: 'text-orange-500' },
+            { label: 'Services', value: dataCount.mongoDB.servicesCount, icon: 'pi pi-cog', color: 'text-teal-500' }
+          ]">
+            <p-card class="text-center">
+              <div class="text-lg font-semibold mb-2 flex justify-center items-center gap-2">
+                <i [class]="item.icon + ' ' + item.color"></i> {{ item.label }}
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ item.value }}</div>
+            </p-card>
+          </ng-container>
+        </div>
+      </p-tabpanel>
+      
+      <p-tabpanel [value]="3">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          <ng-container *ngFor="let item of [
+            { label: 'Clients', value: dataCount.cassandra.clientsCount, icon: 'pi pi-users', color: 'text-blue-500' },
+            { label: 'Payments', value: dataCount.cassandra.paymentsCount, icon: 'pi pi-credit-card', color: 'text-green-500' },
+            { label: 'Reservations', value: dataCount.cassandra.reservationsCount, icon: 'pi pi-calendar', color: 'text-purple-500' },
+            { label: 'ReservationsServices', value: dataCount.cassandra.reservationsServicesCount, icon: 'pi pi-link', color: 'text-indigo-500' },
+            { label: 'Rooms', value: dataCount.cassandra.roomsCount, icon: 'pi pi-home', color: 'text-orange-500' },
+            { label: 'Services', value: dataCount.cassandra.servicesCount, icon: 'pi pi-cog', color: 'text-teal-500' }
+          ]">
+            <p-card class="text-center">
+              <div class="text-lg font-semibold mb-2 flex justify-center items-center gap-2">
+                <i [class]="item.icon + ' ' + item.color"></i> {{ item.label }}
+              </div>
+              <div class="text-2xl font-bold text-gray-800">{{ item.value }}</div>
+            </p-card>
+          </ng-container>
+        </div>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
+</p-card>

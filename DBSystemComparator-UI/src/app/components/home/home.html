@@ -1,0 +1,165 @@
+<div class="title">Home</div>
+<div class="home-container">
+  <p-card class="w-full max-w-4xl mx-auto">
+    <p-stepper [(value)]="activeStep" class="basis-[40rem]">
+
+      <div class="w-75 mx-auto"><p-step-list>
+        <p-step [value]="1" class="flex flex-row flex-auto gap-2">
+          <ng-template #content let-activateCallback="activateCallback" let-value="value">
+            <button class="bg-transparent border-0 inline-flex flex-col gap-2">
+              <span class="rounded-full border-2 w-12 h-12 inline-flex items-center justify-center" (click)="goToStep1()"
+                [ngClass]="{'step-active': value <= activeStep, 'step-inactive': value > activeStep}">
+                <i class="pi pi-list"></i>
+              </span>
+            </button>
+          </ng-template>
+        </p-step>
+
+        <p-step [value]="2" class="flex flex-row flex-auto gap-2">
+          <ng-template #content let-activateCallback="activateCallback" let-value="value">
+            <button class="bg-transparent border-0 inline-flex flex-col gap-2">
+              <span class="rounded-full border-2 w-12 h-12 inline-flex items-center justify-center" (click)="goToStep2()"
+                [ngClass]="{'step-active': value <= activeStep, 'step-inactive': value > activeStep}">
+                <i class="pi pi-check"></i>
+              </span>
+            </button>
+          </ng-template>
+        </p-step>
+      </p-step-list></div>
+
+      <p-step-panels>
+        <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="flex flex-col gap-2 mx-auto ml-8 mr-8">
+              <div class="text-center mt-2 mb-4 text-xl font-semibold">Choose one scenario</div>
+              <div class="flex flex-col gap-4">
+                <p-accordion [multiple]="true">
+                  <p-accordion-panel value="0">
+                      <p-accordion-header>CREATE</p-accordion-header>
+                      <p-accordion-content *ngFor="let item of createScenarios">
+                        <div class="flex justify-between items-center">
+                          <label>&mdash; {{ item.description }}</label>
+                          <p-toggleswitch [(ngModel)]="item.selected" (onChange)="setScenario(item)" />
+                        </div>
+                      </p-accordion-content>
+                  </p-accordion-panel>
+                  <p-accordion-panel value="1">
+                      <p-accordion-header>READ</p-accordion-header>
+                      <p-accordion-content *ngFor="let item of readScenarios">
+                          <div class="flex justify-between items-center">
+                            <label>&mdash; {{ item.description }}</label>
+                            <p-toggleswitch [(ngModel)]="item.selected" (onChange)="setScenario(item)" />
+                          </div>
+                      </p-accordion-content>
+                  </p-accordion-panel>
+                  <p-accordion-panel value="2">
+                      <p-accordion-header>UPDATE</p-accordion-header>
+                      <p-accordion-content *ngFor="let item of updateScenarios">
+                          <div class="flex justify-between items-center">
+                            <label>&mdash; {{ item.description }}</label>
+                            <p-toggleswitch [(ngModel)]="item.selected" (onChange)="setScenario(item)" />
+                          </div>
+                      </p-accordion-content>
+                  </p-accordion-panel>
+                  <p-accordion-panel value="3">
+                      <p-accordion-header>DELETE</p-accordion-header>
+                      <p-accordion-content *ngFor="let item of deleteScenarios">
+                          <div class="flex justify-between items-center">
+                            <label>&mdash; {{ item.description }}</label>
+                            <p-toggleswitch [(ngModel)]="item.selected" (onChange)="setScenario(item)" />
+                          </div>
+                      </p-accordion-content>
+                  </p-accordion-panel>
+                </p-accordion>
+              </div>
+            </div>
+
+            <div class="flex mt-8 justify-end">
+              <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" (onClick)="goToStep2()" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <p-step-panel [value]="2">
+            <ng-template #content let-activateCallback="activateCallback">
+                <div class="flex flex-col gap-2 mx-auto ml-8 mr-8">
+                  <div class="text-xl font-semibold mt-2 mb-4 text-center">Summary</div>
+
+                  <div class="flex flex-col gap-3">
+                      <div class="flex flex-col sm:flex-row justify-between gap-1">
+                        <span>Selected scenario:</span>
+                        <span class="sm:text-right break-all"><b>{{selectedScenario?.description}}</b></span>
+                      </div>
+                  </div>
+
+                  <div class="mt-5" *ngIf="timeData.length > 0 || ramUsageData.length > 0 || cpuUsageData.length > 0">
+                    <p-message severity="info" class="flex flex-col mt-1 mb-8">
+                      <div class="small-info w-1/4 mx-auto text-center">
+                        <div class="small-info mb-2" *ngFor="let db of getMetricsByDatabase()">
+                          <strong class="underline">{{ db.dbName }}</strong>
+                          <div class="ml-4 list-disc text-left">
+                            <p *ngIf="db.time !== undefined">Time: <b>{{ db.time }} s</b></p>
+                            <p *ngIf="db.ram !== undefined">RAM usage: <b>{{ db.ram }} MB</b></p>
+                            <p *ngIf="db.cpu !== undefined">CPU usage: <b>{{ db.cpu }}%</b></p>
+                          </div>
+                        </div>
+                      </div>
+                    </p-message>
+                    <div #timeContainer class="chart-container mb-8">
+                      <ngx-charts-bar-vertical
+                        [view]="view"
+                        [results]="timeData"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [legend]="false"
+                        [showXAxisLabel]="true"
+                        [showYAxisLabel]="true"
+                        [xAxisLabel]="'Database'"
+                        [yAxisLabel]="'Time [s]'"
+                        [roundDomains]="true"
+                        [animations]="false">
+                      </ngx-charts-bar-vertical>
+                    </div>
+                    <div #ramUsageContainer class="chart-container mb-8">
+                      <ngx-charts-bar-vertical
+                        [view]="view"
+                        [results]="ramUsageData"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [legend]="false"
+                        [showXAxisLabel]="true"
+                        [showYAxisLabel]="true"
+                        [xAxisLabel]="'Database'"
+                        [yAxisLabel]="'RAM usage [MB]'"
+                        [roundDomains]="true"
+                        [animations]="false">
+                      </ngx-charts-bar-vertical>
+                    </div>
+                    <div #cpuUsageContainer class="chart-container mb-3">
+                      <ngx-charts-bar-vertical
+                        [view]="view"
+                        [results]="cpuUsageData"
+                        [xAxis]="true"
+                        [yAxis]="true"
+                        [legend]="false"
+                        [showXAxisLabel]="true"
+                        [showYAxisLabel]="true"
+                        [xAxisLabel]="'Database'"
+                        [yAxisLabel]="'CPU usage [%]'"
+                        [roundDomains]="true"
+                        [animations]="false">
+                      </ngx-charts-bar-vertical>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex mt-8 justify-between">
+                <p-button label="Back" icon="pi pi-arrow-left" severity="secondary" (onClick)="activateCallback(1)" />
+                <p-button *ngIf="!(timeData.length > 0 || ramUsageData.length > 0 || cpuUsageData.length > 0)" label="Test scenario" icon="pi pi-search" (onClick)="testScenario()" [loading]="loadingTest" />
+                </div>
+            </ng-template>
+          </p-step-panel>
+      </p-step-panels>
+    </p-stepper>
+  </p-card>
+</div>

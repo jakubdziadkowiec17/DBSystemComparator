@@ -6,23 +6,23 @@ using Microsoft.AspNetCore.Mvc;
 namespace DBSystemComparator_API.Controllers
 {
     [ApiController]
-    [Route("api/data-count")]
-    public class DataCountController : ControllerBase
+    [Route("api/database")]
+    public class DatabaseController : ControllerBase
     {
-        private readonly IDataCountService _dataCountService;
+        private readonly IDatabaseService _databaseService;
         private readonly IErrorLogService _errorLogService;
-        public DataCountController(IDataCountService dataCountService, IErrorLogService errorLogService)
+        public DatabaseController(IDatabaseService databaseService, IErrorLogService errorLogService)
         {
-            _dataCountService = dataCountService;
+            _databaseService = databaseService;
             _errorLogService = errorLogService;
         }
 
-        [HttpGet]
-        public async Task<ActionResult<DataCountDTO>> GetDataCount()
+        [HttpGet("tables-count")]
+        public async Task<ActionResult<DataCountDTO>> GetTablesCountForDatabases()
         {
             try
             {
-                return Ok(await _dataCountService.GetDataCountAsync());
+                return Ok(await _databaseService.GetTablesCountForDatabasesAsync());
             }
             catch (Exception ex)
             {

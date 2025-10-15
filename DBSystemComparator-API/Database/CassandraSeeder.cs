@@ -6,68 +6,83 @@ namespace DBSystemComparator_API.Database
     {
         public static async Task CreateTablesAsync(Cassandra.ISession session)
         {
+            // Clients
             await session.ExecuteAsync(new SimpleStatement(@"
-            CREATE TABLE IF NOT EXISTS clients (
-                id int PRIMARY KEY,
-                name text,
-                secondname text,
-                lastname text,
-                email text,
-                dateofbirth timestamp,
-                address text,
-                phonenumber text,
-                isactive boolean
-            );
-        "));
+                CREATE TABLE IF NOT EXISTS clients (
+                    id uuid PRIMARY KEY,
+                    firstname text,
+                    secondname text,
+                    lastname text,
+                    email text,
+                    dateofbirth timestamp,
+                    address text,
+                    phonenumber text,
+                    isactive boolean
+                );
+            "));
 
+            // Rooms
             await session.ExecuteAsync(new SimpleStatement(@"
-            CREATE TABLE IF NOT EXISTS rooms (
-                id int PRIMARY KEY,
-                number int,
-                capacity int,
-                pricepernight int,
-                isactive boolean
-            );
-        "));
+                CREATE TABLE IF NOT EXISTS rooms (
+                    id uuid PRIMARY KEY,
+                    number int,
+                    capacity int,
+                    pricepernight int,
+                    isactive boolean
+                );
+            "));
 
+            // Reservations
             await session.ExecuteAsync(new SimpleStatement(@"
-            CREATE TABLE IF NOT EXISTS reservations (
-                id int PRIMARY KEY,
-                clientid int,
-                roomid int,
-                checkindate timestamp,
-                checkoutdate timestamp,
-                creationdate timestamp
-            );
-        "));
+                CREATE TABLE IF NOT EXISTS reservations (
+                    id uuid PRIMARY KEY,
+                    clientid uuid,
+                    roomid uuid,
+                    checkindate timestamp,
+                    checkoutdate timestamp,
+                    creationdate timestamp
+                );
+            "));
 
+            // Payments
             await session.ExecuteAsync(new SimpleStatement(@"
-            CREATE TABLE IF NOT EXISTS payments (
-                id int PRIMARY KEY,
-                reservationid int,
-                description text,
-                sum int,
-                creationdate timestamp
-            );
-        "));
+                CREATE TABLE IF NOT EXISTS payments (
+                    id uuid PRIMARY KEY,
+                    reservationid uuid,
+                    description text,
+                    sum int,
+                    creationdate timestamp
+                );
+            "));
 
+            // Services
             await session.ExecuteAsync(new SimpleStatement(@"
-            CREATE TABLE IF NOT EXISTS services (
-                id int PRIMARY KEY,
-                name text,
-                price int,
-                isactive boolean
-            );
-        "));
+                CREATE TABLE IF NOT EXISTS services (
+                    id uuid PRIMARY KEY,
+                    name text,
+                    price int,
+                    isactive boolean
+                );
+            "));
 
+            // ReservationsServices
             await session.ExecuteAsync(new SimpleStatement(@"
-            CREATE TABLE IF NOT EXISTS reservation_services (
-                reservationid int,
-                serviceid int,
-                creationdate timestamp,
-                PRIMARY KEY (reservationid, serviceid)
-            );
-        "));
+                CREATE TABLE IF NOT EXISTS reservationsservices (
+                    reservationid uuid,
+                    serviceid uuid,
+                    creationdate timestamp,
+                    PRIMARY KEY (reservationid, serviceid)
+                );
+            "));
+
+            // Indexes
+            await session.ExecuteAsync(new SimpleStatement(@"CREATE INDEX IF NOT EXISTS idx_clients_isactive ON clients(isactive);"));
+            await session.ExecuteAsync(new SimpleStatement(@"CREATE INDEX IF NOT EXISTS idx_rooms_isactive ON rooms(isactive);"));
+            await session.ExecuteAsync(new SimpleStatement(@"CREATE INDEX IF NOT EXISTS idx_reservations_clientid ON reservations(clientid);"));
+            await session.ExecuteAsync(new SimpleStatement(@"CREATE INDEX IF NOT EXISTS idx_reservations_roomid ON reservations(roomid);"));
+            await session.ExecuteAsync(new SimpleStatement(@"CREATE INDEX IF NOT EXISTS idx_payments_reservationid ON payments(reservationid);"));
+            await session.ExecuteAsync(new SimpleStatement(@"CREATE INDEX IF NOT EXISTS idx_services_isactive ON services(isactive);"));
+            await session.ExecuteAsync(new SimpleStatement(@"CREATE INDEX IF NOT EXISTS idx_reservationsservices_serviceid ON reservationsservices(serviceid);"));
         }
     }
 }

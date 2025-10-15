@@ -81,21 +81,21 @@ namespace DBSystemComparator_API.Database
                     CONSTRAINT FK_Payments_Reservations FOREIGN KEY (ReservationId) REFERENCES Reservations(Id) ON DELETE CASCADE
                 );",
 
-                // ReservationServices
-                @"CREATE TABLE IF NOT EXISTS ReservationServices (
+                // ReservationsServices
+                @"CREATE TABLE IF NOT EXISTS ReservationsServices (
                     ReservationId INT NOT NULL,
                     ServiceId INT NOT NULL,
                     CreationDate TIMESTAMP NOT NULL,
                     PRIMARY KEY (ReservationId, ServiceId),
-                    CONSTRAINT FK_ReservationServices_Reservations FOREIGN KEY (ReservationId) REFERENCES Reservations(Id) ON DELETE CASCADE,
-                    CONSTRAINT FK_ReservationServices_Services FOREIGN KEY (ServiceId) REFERENCES Services(Id) ON DELETE CASCADE
+                    CONSTRAINT FK_ReservationsServices_Reservations FOREIGN KEY (ReservationId) REFERENCES Reservations(Id) ON DELETE CASCADE,
+                    CONSTRAINT FK_ReservationsServices_Services FOREIGN KEY (ServiceId) REFERENCES Services(Id) ON DELETE CASCADE
                 );",
 
                 // Indexes
                 @"CREATE INDEX IF NOT EXISTS ix_reservations_clientid ON Reservations(ClientId);",
                 @"CREATE INDEX IF NOT EXISTS ix_reservations_roomid ON Reservations(RoomId);",
                 @"CREATE INDEX IF NOT EXISTS ix_payments_reservationid ON Payments(ReservationId);",
-                @"CREATE INDEX IF NOT EXISTS ix_reservationservices_serviceid ON ReservationServices(ServiceId);"
+                @"CREATE INDEX IF NOT EXISTS ix_reservationsservices_serviceid ON ReservationsServices(ServiceId);"
             };
 
             foreach (var cmdText in commands)

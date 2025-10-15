@@ -13,7 +13,7 @@ namespace DBSystemComparator_API.Models.Collections
         [BsonElement("Capacity")]
         public int Capacity { get; set; }
         [BsonElement("PricePerNight")]
-        public decimal PricePerNight { get; set; }
+        public int PricePerNight { get; set; }
         [BsonElement("IsActive")]
         public bool IsActive { get; set; }
     }

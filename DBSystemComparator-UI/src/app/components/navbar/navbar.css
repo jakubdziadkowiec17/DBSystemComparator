@@ -1,0 +1,60 @@
+::ng-deep app-navbar .p-menubar {
+    border-top: none;
+    border-right: none;
+    border-left: none;
+    gap: 0;
+    box-shadow: var(--p-card-shadow);
+    border-radius: 0;
+    min-height: 66px;
+    padding: 0 2.25vw;
+}
+
+@media (max-height: 900px) {
+    ::ng-deep app-navbar .p-menubar {
+        min-height: 58px;
+    }
+}
+
+::ng-deep app-navbar .p-menubar-root-list {
+    margin-left: auto !important;
+}
+
+::ng-deep app-navbar .p-menubar-end {
+    margin-left: 0;
+    align-self: normal;
+}
+
+::ng-deep app-navbar .p-menubar-mobile .p-menubar-button {
+    margin-left: auto !important;
+}
+
+::ng-deep app-navbar .p-menubar-mobile .p-menubar-root-list {
+    border-radius: 0 0 6px 6px;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+}
+
+::ng-deep app-navbar .sign-in > .p-menubar-item-content > .p-menubar-item-link {
+    border: 1px solid !important;
+    border-radius: var(--p-menubar-base-item-border-radius) !important;
+}
+
+::ng-deep app-navbar .other-language > .p-menubar-item-content > .p-menubar-item-link {
+  padding-left: 2.32rem !important;
+}
+
+::ng-deep app-navbar .p-menubar-submenu {
+  min-width: 0 !important;
+}
+
+.start {
+    font-size: 19px;
+    cursor: pointer;
+    text-decoration: none;
+    color: #334155;
+}
+
+.start:hover {
+    color: #1e293b;
+}

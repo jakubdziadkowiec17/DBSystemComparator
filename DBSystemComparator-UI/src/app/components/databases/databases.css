@@ -1,0 +1,23 @@
+.spinner {
+  display: flex; 
+  justify-content: center;
+  align-items: center; 
+  height: 400px;
+}
+
+::ng-deep app-databases .p-card-title {
+    margin-bottom: 0.3rem;
+}
+
+::ng-deep app-databases .p-tab {
+    width: 25% !important;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+::ng-deep app-databases .p-tabpanels {
+    padding-top: 1.75rem;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+}

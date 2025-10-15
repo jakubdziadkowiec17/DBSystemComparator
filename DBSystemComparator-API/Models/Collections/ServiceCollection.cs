@@ -11,7 +11,7 @@ namespace DBSystemComparator_API.Models.Collections
         [BsonElement("Name")]
         public string Name { get; set; }
         [BsonElement("Price")]
-        public decimal Price { get; set; }
+        public int Price { get; set; }
         [BsonElement("IsActive")]
         public bool IsActive { get; set; }
     }

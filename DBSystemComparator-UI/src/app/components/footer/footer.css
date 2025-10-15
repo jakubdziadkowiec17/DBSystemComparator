@@ -1,0 +1,22 @@
+::ng-deep app-footer .p-menubar {
+    border-right: none;
+    border-left: none;
+    border-bottom: none;
+    border-radius: 0;
+    box-shadow: var(--p-card-shadow);
+    justify-content: center;
+    min-height: 62px;
+    padding: 0 2.25vw;
+    word-break: break-word;
+}
+
+@media (max-height: 900px) {
+    ::ng-deep app-footer .p-menubar {
+        min-height: 54px;
+    }
+}
+
+::ng-deep app-footer .p-menubar-end {
+  margin-left: 0 !important;
+  text-align: center;
+}

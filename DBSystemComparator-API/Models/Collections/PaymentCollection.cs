@@ -13,7 +13,7 @@ namespace DBSystemComparator_API.Models.Collections
         [BsonElement("Description")]
         public string Description { get; set; }
         [BsonElement("Sum")]
-        public decimal Sum { get; set; }
+        public int Sum { get; set; }
         [BsonElement("CreationDate")]
         public DateTime CreationDate { get; set; }
     }

@@ -1,0 +1,34 @@
+.home-container {
+  display: flex;
+  justify-content: center;
+}
+
+.small-info {
+  font-size: 15px !important;
+}
+
+.small-info a:hover {
+  opacity: 0.6;
+}
+
+.small-info a {
+  text-decoration: underline;
+}
+
+::ng-deep app-home .p-message-content {
+  display: block;
+  word-break: break-word;
+}
+
+::ng-deep app-home .p-message {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.score-label {
+  font-size: 19px;
+}
+
+.score {
+  font-size: 39px;
+}

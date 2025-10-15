@@ -18,11 +18,11 @@ namespace DBSystemComparator_API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<MetricsDTO>> CheckScenario([FromBody] SelectedScenarioDTO selectedScenarioDTO)
+        public async Task<ActionResult<MetricsDTO>> TestScenario([FromBody] SelectedScenarioDTO selectedScenarioDTO)
         {
             try
             {
-                return Ok(await _scenarioService.CheckScenarioAsync(selectedScenarioDTO));
+                return Ok(await _scenarioService.TestScenarioAsync(selectedScenarioDTO));
             }
             catch (Exception ex)
             {

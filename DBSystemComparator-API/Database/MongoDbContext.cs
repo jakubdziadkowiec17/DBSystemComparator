@@ -21,6 +21,6 @@ namespace DBSystemComparator_API.Database
         public IMongoCollection<ReservationCollection> Reservations => _mongoDatabase.GetCollection<ReservationCollection>("Reservations");
         public IMongoCollection<PaymentCollection> Payments => _mongoDatabase.GetCollection<PaymentCollection>("Payments");
         public IMongoCollection<Models.Collections.ServiceCollection> Services => _mongoDatabase.GetCollection<Models.Collections.ServiceCollection>("Services");
-        public IMongoCollection<ReservationServiceCollection> ReservationServices => _mongoDatabase.GetCollection<ReservationServiceCollection>("ReservationServices");
+        public IMongoCollection<ReservationServiceCollection> ReservationsServices => _mongoDatabase.GetCollection<ReservationServiceCollection>("ReservationsServices");
     }
 }

@@ -85,15 +85,15 @@ namespace DBSystemComparator_API.Database
                       CONSTRAINT FK_Payments_Reservations FOREIGN KEY (ReservationId) REFERENCES Reservations(Id) ON DELETE CASCADE
                   );",
 
-                // ReservationServices
-                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ReservationServices' AND xtype='U')
-                  CREATE TABLE ReservationServices (
+                // ReservationsServices
+                @"IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ReservationsServices' AND xtype='U')
+                  CREATE TABLE ReservationsServices (
                       ReservationId INT NOT NULL,
                       ServiceId INT NOT NULL,
                       CreationDate DATETIME2 NOT NULL,
-                      CONSTRAINT PK_ReservationServices PRIMARY KEY (ReservationId, ServiceId),
-                      CONSTRAINT FK_ReservationServices_Reservations FOREIGN KEY (ReservationId) REFERENCES Reservations(Id) ON DELETE CASCADE,
-                      CONSTRAINT FK_ReservationServices_Services FOREIGN KEY (ServiceId) REFERENCES Services(Id) ON DELETE CASCADE
+                      CONSTRAINT PK_ReservationsServices PRIMARY KEY (ReservationId, ServiceId),
+                      CONSTRAINT FK_ReservationsServices_Reservations FOREIGN KEY (ReservationId) REFERENCES Reservations(Id) ON DELETE CASCADE,
+                      CONSTRAINT FK_ReservationsServices_Services FOREIGN KEY (ServiceId) REFERENCES Services(Id) ON DELETE CASCADE
                   );"
             };
             foreach (var cmdText in commands)
@@ -114,8 +114,8 @@ namespace DBSystemComparator_API.Database
                 @"IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_Payments_ReservationId' AND object_id = OBJECT_ID('Payments'))
                     CREATE INDEX IX_Payments_ReservationId ON Payments(ReservationId);",
 
-                @"IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_ReservationServices_ServiceId' AND object_id = OBJECT_ID('ReservationServices'))
-                    CREATE INDEX IX_ReservationServices_ServiceId ON ReservationServices(ServiceId);"
+                @"IF NOT EXISTS (SELECT name FROM sys.indexes WHERE name = 'IX_ReservationsServices_ServiceId' AND object_id = OBJECT_ID('ReservationsServices'))
+                    CREATE INDEX IX_ReservationsServices_ServiceId ON ReservationsServices(ServiceId);"
             };
             foreach (var cmdText in commands.Concat(indexCommands))
             {

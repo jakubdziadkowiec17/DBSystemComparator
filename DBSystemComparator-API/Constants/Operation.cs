@@ -1,6 +1,6 @@
 ﻿namespace DBSystemComparator_API.Constants
 {
-    public enum Operation
+    public enum OPERATION
     {
         CREATE = 1,
         READ = 2,

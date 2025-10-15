@@ -8,7 +8,7 @@ namespace DBSystemComparator_API.Database
         public static async Task CreateCollectionsAndIndexesAsync(IMongoDatabase database)
         {
             // Collections
-            var requiredCollections = new[] { "Clients", "Rooms", "Reservations", "Payments", "Services", "ReservationServices" };
+            var requiredCollections = new[] { "Clients", "Rooms", "Reservations", "Payments", "Services", "ReservationsServices" };
             var existingCollections = database.ListCollectionNames().ToList();
 
             foreach (var collection in requiredCollections)
@@ -32,8 +32,8 @@ namespace DBSystemComparator_API.Database
                 new CreateIndexModel<PaymentCollection>(Builders<PaymentCollection>.IndexKeys.Ascending(p => p.ReservationId))
             );
 
-            var reservationServices = database.GetCollection<ReservationServiceCollection>("ReservationServices");
-            await reservationServices.Indexes.CreateManyAsync(new[]
+            var reservationsServices = database.GetCollection<ReservationServiceCollection>("ReservationsServices");
+            await reservationsServices.Indexes.CreateManyAsync(new[]
             {
                 new CreateIndexModel<ReservationServiceCollection>(Builders<ReservationServiceCollection>.IndexKeys.Ascending(rs => rs.ReservationId)),
                 new CreateIndexModel<ReservationServiceCollection>(Builders<ReservationServiceCollection>.IndexKeys.Ascending(rs => rs.ServiceId))

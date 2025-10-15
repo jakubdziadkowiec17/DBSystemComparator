@@ -2,9 +2,9 @@
 {
     public static class ERROR
     {
-        public const string SELECTED_INCORRECT_SCENARIO = "SELECTED_INCORRECT_SCENARIO";
-        public const string CHECKING_SCENARIO_FAILED = "CHECKING_SCENARIO_FAILED";
-        public const string GETTING_SCENARIOS_FAILED = "GETTING_SCENARIOS_FAILED";
-        public const string GETTING_DATA_COUNT_FAILED = "GETTING_DATA_COUNT_FAILED";
+        public const string SELECTED_INCORRECT_SCENARIO = "An incorrect scenario was selected.";
+        public const string CHECKING_SCENARIO_FAILED = "An unexpected error occurred while testing the scenario.";
+        public const string GETTING_SCENARIOS_FAILED = "An unexpected error occurred while getting the scenarios.";
+        public const string GETTING_DATA_COUNT_FAILED = "An unexpected error occurred while getting the row counts from tables.";
     }
 }

@@ -22,7 +22,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             var reservationsCount = await _mongoDbContext.Reservations.CountDocumentsAsync(FilterDefinition<ReservationCollection>.Empty);
             var paymentsCount = await _mongoDbContext.Payments.CountDocumentsAsync(FilterDefinition<PaymentCollection>.Empty);
             var servicesCount = await _mongoDbContext.Services.CountDocumentsAsync(FilterDefinition<Models.Collections.ServiceCollection>.Empty);
-            var reservationServicesCount = await _mongoDbContext.ReservationServices.CountDocumentsAsync(FilterDefinition<ReservationServiceCollection>.Empty);
+            var reservationsServicesCount = await _mongoDbContext.ReservationsServices.CountDocumentsAsync(FilterDefinition<ReservationServiceCollection>.Empty);
 
             return new TablesCountDTO
             {
@@ -31,7 +31,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 ReservationsCount = (int)reservationsCount,
                 PaymentsCount = (int)paymentsCount,
                 ServicesCount = (int)servicesCount,
-                ReservationServicesCount = (int)reservationServicesCount
+                ReservationsServicesCount = (int)reservationsServicesCount
             };
         }
 
