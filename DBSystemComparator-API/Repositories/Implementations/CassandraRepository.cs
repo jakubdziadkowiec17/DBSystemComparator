@@ -46,44 +46,52 @@ namespace DBSystemComparator_API.Repositories.Implementations
         }
 
         // CREATE METHODS
-        public Task CreateClientAsync(Guid id, string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
+        public async Task<Guid> CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
         {
+            var id = Guid.NewGuid();
             var stmt = new SimpleStatement(@"
                 INSERT INTO clients (id, firstname, secondname, lastname, email, dateofbirth, address, phonenumber, isactive)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 id, firstName, secondName, lastName, email, dob, address, phone, isActive
             );
-            return _session.ExecuteAsync(stmt);
+            await _session.ExecuteAsync(stmt);
+            return id;
         }
 
-        public Task CreateRoomAsync(Guid id, int number, int capacity, int pricePerNight, bool isActive)
+        public async Task<Guid> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive)
         {
+            var id = Guid.NewGuid();
             var stmt = new SimpleStatement(@"
                 INSERT INTO rooms (id, number, capacity, pricepernight, isactive)
                 VALUES (?, ?, ?, ?, ?)",
                 id, number, capacity, pricePerNight, isActive
             );
-            return _session.ExecuteAsync(stmt);
+            await _session.ExecuteAsync(stmt);
+            return id;
         }
 
-        public Task CreateServiceAsync(Guid id, string name, int price, bool isActive)
+        public async Task<Guid> CreateServiceAsync(string name, int price, bool isActive)
         {
+            var id = Guid.NewGuid();
             var stmt = new SimpleStatement(@"
                 INSERT INTO services (id, name, price, isactive)
                 VALUES (?, ?, ?, ?)",
                 id, name, price, isActive
             );
-            return _session.ExecuteAsync(stmt);
+            await _session.ExecuteAsync(stmt);
+            return id;
         }
 
-        public Task CreateReservationAsync(Guid id, Guid clientId, Guid roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
+        public async Task<Guid> CreateReservationAsync(Guid clientId, Guid roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
         {
+            var id = Guid.NewGuid();
             var stmt = new SimpleStatement(@"
                 INSERT INTO reservations (id, clientid, roomid, checkindate, checkoutdate, creationdate)
                 VALUES (?, ?, ?, ?, ?, ?)",
                 id, clientId, roomId, checkIn, checkOut, creationDate
             );
-            return _session.ExecuteAsync(stmt);
+            await _session.ExecuteAsync(stmt);
+            return id;
         }
 
         public Task CreateReservationServiceAsync(Guid reservationId, Guid serviceId, DateTime creationDate)
@@ -96,14 +104,16 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return _session.ExecuteAsync(stmt);
         }
 
-        public Task CreatePaymentAsync(Guid id, Guid reservationId, string description, int sum, DateTime creationDate)
+        public async Task<Guid> CreatePaymentAsync(Guid reservationId, string description, int sum, DateTime creationDate)
         {
+            var id = Guid.NewGuid();
             var stmt = new SimpleStatement(@"
                 INSERT INTO payments (id, reservationid, description, sum, creationdate)
                 VALUES (?, ?, ?, ?, ?)",
                 id, reservationId, description, sum, creationDate
             );
-            return _session.ExecuteAsync(stmt);
+            await _session.ExecuteAsync(stmt);
+            return id;
         }
 
         // READ
@@ -500,11 +510,11 @@ namespace DBSystemComparator_API.Repositories.Implementations
             }
         }
 
-        public Task DeleteAllClientsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM clients"));
-        public Task DeleteAllRoomsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM rooms"));
-        public Task DeleteAllReservationsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM reservations"));
-        public Task DeleteAllReservationsServicesAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM reservationsservices"));
-        public Task DeleteAllPaymentsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM payments"));
-        public Task DeleteAllServicesAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM services"));
+        public Task DeleteAllClientsAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE clients"));
+        public Task DeleteAllRoomsAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE rooms"));
+        public Task DeleteAllReservationsAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE reservations"));
+        public Task DeleteAllReservationsServicesAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE reservationsservices"));
+        public Task DeleteAllPaymentsAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE payments"));
+        public Task DeleteAllServicesAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE services"));
     }
 }

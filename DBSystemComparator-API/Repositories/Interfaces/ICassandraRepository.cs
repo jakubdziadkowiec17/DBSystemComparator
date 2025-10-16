@@ -7,12 +7,12 @@ namespace DBSystemComparator_API.Repositories.Interfaces
     {
         Task<TablesCountDTO> GetTablesCountAsync();
         // CREATE METHODS
-        Task CreateClientAsync(Guid id, string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive);
-        Task CreateRoomAsync(Guid id, int number, int capacity, int pricePerNight, bool isActive);
-        Task CreateServiceAsync(Guid id, string name, int price, bool isActive);
-        Task CreateReservationAsync(Guid id, Guid clientId, Guid roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate);
+        Task<Guid> CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive);
+        Task<Guid> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive);
+        Task<Guid> CreateServiceAsync(string name, int price, bool isActive);
+        Task<Guid> CreateReservationAsync(Guid clientId, Guid roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate);
         Task CreateReservationServiceAsync(Guid reservationId, Guid serviceId, DateTime creationDate);
-        Task CreatePaymentAsync(Guid id, Guid reservationId, string description, int sum, DateTime creationDate);
+        Task<Guid> CreatePaymentAsync(Guid reservationId, string description, int sum, DateTime creationDate);
         // READ METHODS
         Task<List<Dictionary<string, object>>> ReadClientsWithRoomsAsync(bool isActive);
         Task<List<Dictionary<string, object>>> ReadRoomsWithReservationCountAsync();

@@ -86,11 +86,27 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return result;
         }
 
+        private async Task<T> ExecuteScalarAsync<T>(string sql, Dictionary<string, object> parameters)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            using var command = new SqlCommand(sql, connection);
+
+            foreach (var p in parameters)
+                command.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+
+            await connection.OpenAsync();
+            var result = await command.ExecuteScalarAsync();
+            return (T)Convert.ChangeType(result, typeof(T));
+        }
+
         // CREATE
         public Task<int> CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
         {
-            var sql = @"INSERT INTO Clients (FirstName, SecondName, LastName, Email, DateOfBirth, Address, PhoneNumber, IsActive) 
-                        VALUES (@FirstName, @SecondName, @LastName, @Email, @DOB, @Address, @Phone, @IsActive)";
+            var sql = @"
+                INSERT INTO Clients (FirstName, SecondName, LastName, Email, DateOfBirth, Address, PhoneNumber, IsActive)
+                OUTPUT INSERTED.Id
+                VALUES (@FirstName, @SecondName, @LastName, @Email, @DOB, @Address, @Phone, @IsActive)";
+
             var parameters = new Dictionary<string, object>
             {
                 {"@FirstName", firstName},
@@ -102,12 +118,17 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Phone", phone},
                 {"@IsActive", isActive ? 1 : 0}
             };
-            return ExecuteNonQueryAsync(sql, parameters);
+
+            return ExecuteScalarAsync<int>(sql, parameters);
         }
 
         public Task<int> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive)
         {
-            var sql = "INSERT INTO Rooms (Number, Capacity, PricePerNight, IsActive) VALUES (@Number, @Capacity, @Price, @IsActive)";
+            var sql = @"
+                INSERT INTO Rooms (Number, Capacity, PricePerNight, IsActive)
+                OUTPUT INSERTED.Id
+                VALUES (@Number, @Capacity, @Price, @IsActive)";
+
             var parameters = new Dictionary<string, object>
             {
                 {"@Number", number},
@@ -115,25 +136,34 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Price", pricePerNight},
                 {"@IsActive", isActive ? 1 : 0}
             };
-            return ExecuteNonQueryAsync(sql, parameters);
+
+            return ExecuteScalarAsync<int>(sql, parameters);
         }
 
         public Task<int> CreateServiceAsync(string name, int price, bool isActive)
         {
-            var sql = "INSERT INTO Services (Name, Price, IsActive) VALUES (@Name, @Price, @IsActive)";
+            var sql = @"
+                INSERT INTO Services (Name, Price, IsActive)
+                OUTPUT INSERTED.Id
+                VALUES (@Name, @Price, @IsActive)";
+
             var parameters = new Dictionary<string, object>
             {
                 {"@Name", name},
                 {"@Price", price},
                 {"@IsActive", isActive ? 1 : 0}
             };
-            return ExecuteNonQueryAsync(sql, parameters);
+
+            return ExecuteScalarAsync<int>(sql, parameters);
         }
 
         public Task<int> CreateReservationAsync(int clientId, int roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
         {
-            var sql = @"INSERT INTO Reservations (ClientId, RoomId, CheckInDate, CheckOutDate, CreationDate)
-                        VALUES (@ClientId, @RoomId, @CheckIn, @CheckOut, @CreationDate)";
+            var sql = @"
+                INSERT INTO Reservations (ClientId, RoomId, CheckInDate, CheckOutDate, CreationDate)
+                OUTPUT INSERTED.Id
+                VALUES (@ClientId, @RoomId, @CheckIn, @CheckOut, @CreationDate)";
+
             var parameters = new Dictionary<string, object>
             {
                 {"@ClientId", clientId},
@@ -142,26 +172,33 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@CheckOut", checkOut},
                 {"@CreationDate", creationDate}
             };
-            return ExecuteNonQueryAsync(sql, parameters);
+
+            return ExecuteScalarAsync<int>(sql, parameters);
         }
 
         public Task<int> CreateReservationServiceAsync(int reservationId, int serviceId, DateTime creationDate)
         {
-            var sql = @"INSERT INTO ReservationsServices (ReservationId, ServiceId, CreationDate)
-                        VALUES (@ReservationId, @ServiceId, @CreationDate)";
+            var sql = @"
+                INSERT INTO ReservationsServices (ReservationId, ServiceId, CreationDate)
+                VALUES (@ReservationId, @ServiceId, @CreationDate)";
+
             var parameters = new Dictionary<string, object>
             {
                 {"@ReservationId", reservationId},
                 {"@ServiceId", serviceId},
                 {"@CreationDate", creationDate}
             };
+
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
         public Task<int> CreatePaymentAsync(int reservationId, string description, int sum, DateTime creationDate)
         {
-            var sql = @"INSERT INTO Payments (ReservationId, Description, Sum, CreationDate)
-                        VALUES (@ReservationId, @Description, @Sum, @CreationDate)";
+            var sql = @"
+                INSERT INTO Payments (ReservationId, Description, Sum, CreationDate)
+                OUTPUT INSERTED.Id
+                VALUES (@ReservationId, @Description, @Sum, @CreationDate)";
+
             var parameters = new Dictionary<string, object>
             {
                 {"@ReservationId", reservationId},
@@ -169,7 +206,8 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Sum", sum},
                 {"@CreationDate", creationDate}
             };
-            return ExecuteNonQueryAsync(sql, parameters);
+
+            return ExecuteScalarAsync<int>(sql, parameters);
         }
 
         // READ

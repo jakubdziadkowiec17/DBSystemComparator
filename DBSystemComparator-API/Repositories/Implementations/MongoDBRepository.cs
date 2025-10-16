@@ -37,7 +37,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
         }
 
         // CREATE
-        public async Task CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
+        public async Task<string> CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
         {
             var client = new ClientCollection
             {
@@ -50,10 +50,12 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 PhoneNumber = phone,
                 IsActive = isActive
             };
+
             await _mongoDbContext.Clients.InsertOneAsync(client);
+            return client.Id.ToString();
         }
 
-        public async Task CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive)
+        public async Task<string> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive)
         {
             var room = new RoomCollection
             {
@@ -62,10 +64,12 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 PricePerNight = pricePerNight,
                 IsActive = isActive
             };
+
             await _mongoDbContext.Rooms.InsertOneAsync(room);
+            return room.Id.ToString();
         }
 
-        public async Task CreateServiceAsync(string name, int price, bool isActive)
+        public async Task<string> CreateServiceAsync(string name, int price, bool isActive)
         {
             var service = new Models.Collections.ServiceCollection
             {
@@ -73,10 +77,12 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 Price = price,
                 IsActive = isActive
             };
+
             await _mongoDbContext.Services.InsertOneAsync(service);
+            return service.Id.ToString();
         }
 
-        public async Task CreateReservationAsync(string clientId, string roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
+        public async Task<string> CreateReservationAsync(string clientId, string roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
         {
             var reservation = new ReservationCollection
             {
@@ -86,7 +92,9 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 CheckOutDate = checkOut,
                 CreationDate = creationDate
             };
+
             await _mongoDbContext.Reservations.InsertOneAsync(reservation);
+            return reservation.Id.ToString();
         }
 
         public async Task CreateReservationServiceAsync(string reservationId, string serviceId, DateTime creationDate)
@@ -97,10 +105,11 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 ServiceId = serviceId,
                 CreationDate = creationDate
             };
+
             await _mongoDbContext.ReservationsServices.InsertOneAsync(rs);
         }
 
-        public async Task CreatePaymentAsync(string reservationId, string description, int sum, DateTime creationDate)
+        public async Task<string> CreatePaymentAsync(string reservationId, string description, int sum, DateTime creationDate)
         {
             var payment = new PaymentCollection
             {
@@ -109,7 +118,9 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 Sum = sum,
                 CreationDate = creationDate
             };
+
             await _mongoDbContext.Payments.InsertOneAsync(payment);
+            return payment.Id.ToString();
         }
 
         // READ

@@ -83,7 +83,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
-                    async () => await _cassandraRepository.CreateClientAsync(Guid.NewGuid(), "Jan", "Kamil", "Kowalski", "abcdeabcde@abcdeabcde.com", new DateTime(2000, 1, 1), "Cracow, abc 8", "123456789", true),
+                    async () => await _cassandraRepository.CreateClientAsync("Jan", "Kamil", "Kowalski", "abcdeabcde@abcdeabcde.com", new DateTime(2000, 1, 1), "Cracow, abc 8", "123456789", true),
                     time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.CREATE_2.Id)
@@ -101,7 +101,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
-                    async () => await _cassandraRepository.CreateRoomAsync(Guid.NewGuid(), 100, 2, 400, true),
+                    async () => await _cassandraRepository.CreateRoomAsync(100, 2, 400, true),
                     time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.CREATE_3.Id)
@@ -119,7 +119,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
-                    async () => await _cassandraRepository.CreateServiceAsync(Guid.NewGuid(), "Room cleaning", 70, true),
+                    async () => await _cassandraRepository.CreateServiceAsync("Room cleaning", 70, true),
                     time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.CREATE_4.Id)
@@ -137,7 +137,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
-                    async () => await _cassandraRepository.CreateClientAsync(Guid.NewGuid(), "Kamil", "Jan", "Nowak", "abcdeabcde2@abcdeabcde.com", new DateTime(1998, 1, 1), "Cracow, abc 10", "123456789", false),
+                    async () => await _cassandraRepository.CreateClientAsync("Kamil", "Jan", "Nowak", "abcdeabcde2@abcdeabcde.com", new DateTime(1998, 1, 1), "Cracow, abc 10", "123456789", false),
                     time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.CREATE_5.Id)
@@ -155,7 +155,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
-                    async () => await _cassandraRepository.CreateRoomAsync(Guid.NewGuid(), 200, 4, 800, false),
+                    async () => await _cassandraRepository.CreateRoomAsync(200, 4, 800, false),
                     time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             // READ
