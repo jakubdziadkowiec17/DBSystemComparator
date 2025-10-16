@@ -6,28 +6,31 @@ namespace DBSystemComparator_API.Repositories.Interfaces
     public interface ICassandraRepository
     {
         Task<TablesCountDTO> GetTablesCountAsync();
-        // CREATE
-        Task CreateClientAsync(Guid id, string firstname, string secondname, string lastname, string email, DateTime dateofbirth, string address, string phonenumber, bool isactive);
-        Task CreateRoomAsync(Guid id, int number, int capacity, int pricepernight, bool isactive);
-        Task CreateServiceAsync(Guid id, string name, int price, bool isactive);
-        Task CreateReservationAsync(Guid id, Guid clientid, Guid roomid, DateTime checkindate, DateTime checkoutdate, DateTime creationdate);
-        Task CreateReservationServiceAsync(Guid id, Guid reservationid, Guid serviceid, DateTime creationdate);
-        Task CreatePaymentAsync(Guid id, Guid reservationid, string description, int sum, DateTime creationdate);
-        // READ
-        Task<RowSet> ReadClientsWithRoomsAsync(bool isactive);
-        Task<RowSet> ReadRoomsWithReservationCountAsync();
-        Task<RowSet> ReadServicesUsageAsync();
-        Task<RowSet> ReadPaymentsAboveAsync(int minsum);
-        Task<RowSet> ReadReservationsWithServicesAsync(bool clientactive, bool serviceactive);
-        // UPDATE
-        Task UpdateClientsAddressPhoneAsync(bool isactive);
-        Task UpdateRoomsPriceJoinReservationsAsync(int mincapacity);
-        Task UpdateServicesPriceAsync(bool isactive);
+        // CREATE METHODS
+        Task CreateClientAsync(Guid id, string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive);
+        Task CreateRoomAsync(Guid id, int number, int capacity, int pricePerNight, bool isActive);
+        Task CreateServiceAsync(Guid id, string name, int price, bool isActive);
+        Task CreateReservationAsync(Guid id, Guid clientId, Guid roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate);
+        Task CreateReservationServiceAsync(Guid reservationId, Guid serviceId, DateTime creationDate);
+        Task CreatePaymentAsync(Guid id, Guid reservationId, string description, int sum, DateTime creationDate);
+        // READ METHODS
+        Task<List<Dictionary<string, object>>> ReadClientsWithRoomsAsync(bool isActive);
+        Task<List<Dictionary<string, object>>> ReadRoomsWithReservationCountAsync();
+        Task<List<Dictionary<string, object>>> ReadServicesUsageAsync();
+        Task<List<Dictionary<string, object>>> ReadPaymentsAboveAsync(int minSum);
+        Task<List<Dictionary<string, object>>> ReadReservationsWithServicesAsync(bool clientActive, bool serviceActive);
+        // UPDATE METHODS
+        Task UpdateClientsAddressPhoneAsync(bool isActive);
+        Task UpdateRoomsPriceJoinReservationsAsync(int minCapacity);
+        Task UpdateServicesPriceAsync(bool isActive);
         Task UpdateRoomsPriceInactiveAsync();
         Task UpdateRoomsPriceFutureReservationsAsync();
         // DELETE
-        Task DeleteReservationsSmallRoomsAsync(int capacitythreshold);
-        Task DeleteReservationsServicesFutureAsync(int limitRows);
+        Task DeleteClientAsync(Guid clientId);
+        Task DeleteRoomAsync(Guid roomId);
+        Task DeleteReservationAsync(Guid reservationId);
+        Task DeleteReservationsSmallRoomsAsync(int capacityThreshold);
+        Task DeleteReservationsServicesFutureAsync(int topRows);
         Task DeleteReservationsWithoutPaymentsAsync();
         Task DeleteInactiveClientsWithoutReservationsAsync();
         Task DeleteRoomsWithoutReservationsAsync();

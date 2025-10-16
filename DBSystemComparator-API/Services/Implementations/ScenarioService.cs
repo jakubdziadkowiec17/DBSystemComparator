@@ -79,7 +79,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.CreateClientAsync("Jan", "Kamil", "Kowalski", "abcdeabcde@abcdeabcde.com", new DateTime(2000, 1, 1), "Cracow, abc 8", "123456789", true),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -97,7 +97,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.CreateRoomAsync(100, 2, 400, true),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -115,7 +115,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.CreateServiceAsync("Room cleaning", 70, true),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -133,7 +133,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.CreateClientAsync("Kamil", "Jan", "Nowak", "abcdeabcde2@abcdeabcde.com", new DateTime(1998, 1, 1), "Cracow, abc 10", "123456789", false),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -151,7 +151,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.CreateRoomAsync(200, 4, 800, false),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -170,7 +170,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.ReadClientsWithRoomsAsync(true),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -188,7 +188,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.ReadRoomsWithReservationCountAsync(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -206,7 +206,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.ReadServicesUsageAsync(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -224,7 +224,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.ReadPaymentsAboveAsync(400),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -242,7 +242,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.ReadReservationsWithServicesAsync(true, true),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -261,7 +261,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.UpdateClientsAddressPhoneAsync(true),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -279,7 +279,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.UpdateRoomsPriceJoinReservationsAsync(2),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -297,7 +297,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.UpdateServicesPriceAsync(true),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -315,7 +315,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.UpdateRoomsPriceInactiveAsync(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -333,7 +333,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.UpdateRoomsPriceFutureReservationsAsync(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -352,7 +352,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.DeleteReservationsSmallRoomsAsync(2),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -370,7 +370,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.DeleteReservationsServicesFutureAsync(200),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -388,7 +388,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.DeleteReservationsWithoutPaymentsAsync(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -406,7 +406,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.DeleteInactiveClientsWithoutReservationsAsync(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(
@@ -424,7 +424,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.GetAllRoomIdsAsync(),
+                    async () => await _mongoDBRepository.DeleteRoomsWithoutReservationsAsync(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 await GetMetricsAsync(

@@ -45,205 +45,466 @@ namespace DBSystemComparator_API.Repositories.Implementations
             };
         }
 
-        // CREATE
-        public async Task CreateClientAsync(Guid id, string firstname, string secondname, string lastname, string email, DateTime dateofbirth, string address, string phonenumber, bool isactive)
+        // CREATE METHODS
+        public Task CreateClientAsync(Guid id, string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
         {
-            var query = "INSERT INTO clients (id, firstname, secondname, lastname, email, dateofbirth, address, phonenumber, isactive) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            await _session.ExecuteAsync(new SimpleStatement(query, id, firstname, secondname, lastname, email, dateofbirth, address, phonenumber, isactive));
+            var stmt = new SimpleStatement(@"
+                INSERT INTO clients (id, firstname, secondname, lastname, email, dateofbirth, address, phonenumber, isactive)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                id, firstName, secondName, lastName, email, dob, address, phone, isActive
+            );
+            return _session.ExecuteAsync(stmt);
         }
 
-        public async Task CreateRoomAsync(Guid id, int number, int capacity, int pricepernight, bool isactive)
+        public Task CreateRoomAsync(Guid id, int number, int capacity, int pricePerNight, bool isActive)
         {
-            var query = "INSERT INTO rooms (id, number, capacity, pricepernight, isactive) VALUES (?, ?, ?, ?, ?)";
-            await _session.ExecuteAsync(new SimpleStatement(query, id, number, capacity, pricepernight, isactive));
+            var stmt = new SimpleStatement(@"
+                INSERT INTO rooms (id, number, capacity, pricepernight, isactive)
+                VALUES (?, ?, ?, ?, ?)",
+                id, number, capacity, pricePerNight, isActive
+            );
+            return _session.ExecuteAsync(stmt);
         }
 
-        public async Task CreateServiceAsync(Guid id, string name, int price, bool isactive)
+        public Task CreateServiceAsync(Guid id, string name, int price, bool isActive)
         {
-            var query = "INSERT INTO services (id, name, price, isactive) VALUES (?, ?, ?, ?)";
-            await _session.ExecuteAsync(new SimpleStatement(query, id, name, price, isactive));
+            var stmt = new SimpleStatement(@"
+                INSERT INTO services (id, name, price, isactive)
+                VALUES (?, ?, ?, ?)",
+                id, name, price, isActive
+            );
+            return _session.ExecuteAsync(stmt);
         }
 
-        public async Task CreateReservationAsync(Guid id, Guid clientid, Guid roomid, DateTime checkindate, DateTime checkoutdate, DateTime creationdate)
+        public Task CreateReservationAsync(Guid id, Guid clientId, Guid roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
         {
-            var query = "INSERT INTO reservations (id, clientid, roomid, checkindate, checkoutdate, creationdate) VALUES (?, ?, ?, ?, ?, ?)";
-            await _session.ExecuteAsync(new SimpleStatement(query, id, clientid, roomid, checkindate, checkoutdate, creationdate));
+            var stmt = new SimpleStatement(@"
+                INSERT INTO reservations (id, clientid, roomid, checkindate, checkoutdate, creationdate)
+                VALUES (?, ?, ?, ?, ?, ?)",
+                id, clientId, roomId, checkIn, checkOut, creationDate
+            );
+            return _session.ExecuteAsync(stmt);
         }
 
-        public async Task CreateReservationServiceAsync(Guid id, Guid reservationid, Guid serviceid, DateTime creationdate)
+        public Task CreateReservationServiceAsync(Guid reservationId, Guid serviceId, DateTime creationDate)
         {
-            var query = "INSERT INTO reservationsservices (id, reservationid, serviceid, creationdate) VALUES (?, ?, ?, ?)";
-            await _session.ExecuteAsync(new SimpleStatement(query, id, reservationid, serviceid, creationdate));
+            var stmt = new SimpleStatement(@"
+                INSERT INTO reservationsservices (reservationid, serviceid, creationdate)
+                VALUES (?, ?, ?)",
+                reservationId, serviceId, creationDate
+            );
+            return _session.ExecuteAsync(stmt);
         }
 
-        public async Task CreatePaymentAsync(Guid id, Guid reservationid, string description, int sum, DateTime creationdate)
+        public Task CreatePaymentAsync(Guid id, Guid reservationId, string description, int sum, DateTime creationDate)
         {
-            var query = "INSERT INTO payments (id, reservationid, description, sum, creationdate) VALUES (?, ?, ?, ?, ?)";
-            await _session.ExecuteAsync(new SimpleStatement(query, id, reservationid, description, sum, creationdate));
+            var stmt = new SimpleStatement(@"
+                INSERT INTO payments (id, reservationid, description, sum, creationdate)
+                VALUES (?, ?, ?, ?, ?)",
+                id, reservationId, description, sum, creationDate
+            );
+            return _session.ExecuteAsync(stmt);
         }
 
         // READ
-        public async Task<RowSet> ReadClientsWithRoomsAsync(bool isactive)
+        public async Task<List<Dictionary<string, object>>> ReadClientsWithRoomsAsync(bool isActive)
         {
-            var query = "SELECT c.id, c.firstname, c.lastname, r.number, r.pricepernight " +
-                        "FROM clients c LEFT JOIN reservations res ON res.clientid = c.id " +
-                        "LEFT JOIN rooms r ON res.roomid = r.id " +
-                        "WHERE c.isactive = ? AND r.isactive = ?";
-            return await _session.ExecuteAsync(new SimpleStatement(query, isactive, isactive));
+            var clientsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM clients WHERE isactive = ?", isActive));
+            var reservationsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM reservations"));
+            var roomsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM rooms"));
+
+            var clients = clientsRs.ToList();
+            var reservations = reservationsRs.ToList();
+            var rooms = roomsRs.ToDictionary(r => r["id"]);
+
+            var result = new List<Dictionary<string, object>>();
+
+            foreach (var client in clients)
+            {
+                var clientReservations = reservations.Where(r => r["clientid"].Equals(client["id"]));
+                foreach (var res in clientReservations)
+                {
+                    if (rooms.TryGetValue(res["roomid"], out var room))
+                    {
+                        result.Add(new Dictionary<string, object>
+                        {
+                            {"Id", client["id"]},
+                            {"FirstName", client["firstname"]},
+                            {"LastName", client["lastname"]},
+                            {"Number", room["number"]},
+                            {"PricePerNight", room["pricepernight"]}
+                        });
+                    }
+                }
+            }
+
+            return result;
         }
 
-        public async Task<RowSet> ReadRoomsWithReservationCountAsync()
+        public async Task<List<Dictionary<string, object>>> ReadRoomsWithReservationCountAsync()
         {
-            var query = "SELECT r.id, r.number, r.capacity, COUNT(res.id) AS reservationcount " +
-                        "FROM rooms r LEFT JOIN reservations res ON res.roomid = r.id " +
-                        "GROUP BY r.id, r.number, r.capacity";
-            return await _session.ExecuteAsync(new SimpleStatement(query));
+            var roomsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM rooms"));
+            var reservationsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM reservations"));
+
+            var rooms = roomsRs.ToList();
+            var reservations = reservationsRs.ToList();
+
+            var result = new List<Dictionary<string, object>>();
+
+            foreach (var room in rooms)
+            {
+                var count = reservations.Count(r => r["roomid"].Equals(room["id"]));
+                if (count > 0)
+                {
+                    result.Add(new Dictionary<string, object>
+                    {
+                        {"Id", room["id"]},
+                        {"Number", room["number"]},
+                        {"Capacity", room["capacity"]},
+                        {"ReservationCount", count}
+                    });
+                }
+            }
+
+            return result;
         }
 
-        public async Task<RowSet> ReadServicesUsageAsync()
+        public async Task<List<Dictionary<string, object>>> ReadServicesUsageAsync()
         {
-            var query = "SELECT s.name AS servicename, s.price, COUNT(rs.reservationid) AS usagecount " +
-                        "FROM services s LEFT JOIN reservationsservices rs ON s.id = rs.serviceid " +
-                        "GROUP BY s.name, s.price";
-            return await _session.ExecuteAsync(new SimpleStatement(query));
+            var servicesRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM services"));
+            var resServicesRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM reservationsservices"));
+
+            var services = servicesRs.ToList();
+            var resServices = resServicesRs.ToList();
+
+            var result = services.Select(s =>
+            {
+                var usageCount = resServices.Count(rs => rs["serviceid"].Equals(s["id"]));
+                return new Dictionary<string, object>
+                {
+                    {"ServiceName", s["name"]},
+                    {"Price", s["price"]},
+                    {"UsageCount", usageCount}
+                };
+            }).OrderByDescending(x => (int)x["UsageCount"]).ToList();
+
+            return result;
         }
 
-        public async Task<RowSet> ReadPaymentsAboveAsync(int minsum)
+        public async Task<List<Dictionary<string, object>>> ReadPaymentsAboveAsync(int minSum)
         {
-            var query = "SELECT p.id, p.sum, p.creationdate, c.firstname AS clientname, r.number AS roomnumber " +
-                        "FROM payments p LEFT JOIN reservations res ON res.id = p.reservationid " +
-                        "LEFT JOIN clients c ON res.clientid = c.id " +
-                        "LEFT JOIN rooms r ON res.roomid = r.id WHERE p.sum > ?";
-            return await _session.ExecuteAsync(new SimpleStatement(query, minsum));
+            var paymentsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM payments"));
+            var reservationsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM reservations"));
+            var clientsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM clients"));
+            var roomsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM rooms"));
+
+            var payments = paymentsRs.ToList().Where(p => (int)p["sum"] > minSum).ToList();
+            var reservations = reservationsRs.ToList();
+            var clients = clientsRs.ToDictionary(c => c["id"]);
+            var rooms = roomsRs.ToDictionary(r => r["id"]);
+
+            var result = new List<Dictionary<string, object>>();
+
+            foreach (var p in payments)
+            {
+                var res = reservations.FirstOrDefault(r => r["id"].Equals(p["reservationid"]));
+                if (res == null) continue;
+
+                clients.TryGetValue(res["clientid"], out var client);
+                rooms.TryGetValue(res["roomid"], out var room);
+
+                result.Add(new Dictionary<string, object>
+                {
+                    {"Id", p["id"]},
+                    {"Sum", p["sum"]},
+                    {"CreationDate", p["creationdate"]},
+                    {"ClientName", client?["firstname"]},
+                    {"RoomNumber", room?["number"]}
+                });
+            }
+
+            return result;
         }
 
-        public async Task<RowSet> ReadReservationsWithServicesAsync(bool clientactive, bool serviceactive)
+        public async Task<List<Dictionary<string, object>>> ReadReservationsWithServicesAsync(bool clientActive, bool serviceActive)
         {
-            var query = "SELECT res.id AS reservationid, c.lastname, s.name AS servicename, s.price, res.checkindate, res.checkoutdate " +
-                        "FROM reservations res LEFT JOIN clients c ON res.clientid = c.id " +
-                        "LEFT JOIN reservationsservices rs ON rs.reservationid = res.id " +
-                        "LEFT JOIN services s ON rs.serviceid = s.id " +
-                        "WHERE c.isactive = ? AND s.isactive = ?";
-            return await _session.ExecuteAsync(new SimpleStatement(query, clientactive, serviceactive));
+            var reservationsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM reservations"));
+            var clientsRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM clients WHERE isactive = ?", clientActive));
+            var resServicesRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM reservationsservices"));
+            var servicesRs = await _session.ExecuteAsync(new SimpleStatement("SELECT * FROM services WHERE isactive = ?", serviceActive));
+
+            var reservations = reservationsRs.ToList();
+            var clients = clientsRs.ToDictionary(c => c["id"]);
+            var resServices = resServicesRs.ToList();
+            var services = servicesRs.ToDictionary(s => s["id"]);
+
+            var result = new List<Dictionary<string, object>>();
+
+            foreach (var res in reservations)
+            {
+                if (!clients.ContainsKey(res["clientid"])) continue;
+
+                var client = clients[res["clientid"]];
+                var linkedServices = resServices.Where(rs => rs["reservationid"].Equals(res["id"]));
+
+                foreach (var rs in linkedServices)
+                {
+                    if (!services.ContainsKey(rs["serviceid"])) continue;
+
+                    var svc = services[rs["serviceid"]];
+                    result.Add(new Dictionary<string, object>
+                    {
+                        {"ReservationId", res["id"]},
+                        {"LastName", client["lastname"]},
+                        {"ServiceName", svc["name"]},
+                        {"ServicePrice", svc["price"]},
+                        {"CheckInDate", res["checkindate"]},
+                        {"CheckOutDate", res["checkoutdate"]}
+                    });
+                }
+            }
+
+            return result;
         }
 
         // UPDATE
         public async Task UpdateClientsAddressPhoneAsync(bool isActive)
         {
-            var selectQuery = "SELECT id FROM clients WHERE isactive = ? LIMIT 200";
-            var preparedSelect = await _session.PrepareAsync(selectQuery);
-            var boundSelect = preparedSelect.Bind(isActive);
+            var clients = (await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id FROM clients WHERE isactive = ? LIMIT 200", isActive)
+            )).Select(r => r["id"]);
 
-            var rows = await _session.ExecuteAsync(boundSelect);
-            var clientIds = rows.Select(r => (Guid)r["id"]).ToList();
-
-            var updateQuery = "UPDATE clients SET address = 'Cracow, ul. abc 4', phonenumber = '123456789' WHERE id = ?";
-            var preparedUpdate = await _session.PrepareAsync(updateQuery);
-
-            foreach (var id in clientIds)
+            foreach (var clientId in clients)
             {
-                var boundUpdate = preparedUpdate.Bind(id);
-                await _session.ExecuteAsync(boundUpdate);
+                await _session.ExecuteAsync(
+                    new SimpleStatement(
+                        "UPDATE clients SET address = ?, phonenumber = ? WHERE id = ?",
+                        "Cracow, ul. abc 4", "123456789", clientId
+                    )
+                );
             }
         }
 
-        public async Task UpdateRoomsPriceJoinReservationsAsync(int mincapacity)
+        public async Task UpdateRoomsPriceJoinReservationsAsync(int minCapacity)
         {
-            var query = "UPDATE rooms SET pricepernight = pricepernight + 150 WHERE capacity >= ?";
-            await _session.ExecuteAsync(new SimpleStatement(query, mincapacity));
+            var reservations = await _session.ExecuteAsync(new SimpleStatement("SELECT roomid FROM reservations"));
+            var reservedRoomIds = reservations.Select(r => r["roomid"]).ToHashSet();
+
+            var rooms = await _session.ExecuteAsync(new SimpleStatement("SELECT id, capacity FROM rooms"));
+            var targetRoomIds = rooms
+                .Where(r => reservedRoomIds.Contains(r["id"]) && (int)r["capacity"] >= minCapacity)
+                .Select(r => r["id"]);
+
+            foreach (var roomId in targetRoomIds)
+            {
+                await _session.ExecuteAsync(new SimpleStatement(
+                    "UPDATE rooms SET pricepernight = pricepernight + 150 WHERE id = ?",
+                    roomId
+                ));
+            }
         }
 
-        public async Task UpdateServicesPriceAsync(bool isactive)
+        public async Task UpdateServicesPriceAsync(bool isActive)
         {
-            var query = "UPDATE services SET price = price + 25 WHERE isactive = ?";
-            await _session.ExecuteAsync(new SimpleStatement(query, isactive));
+            var services = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id, price FROM services WHERE isactive = ?", isActive)
+            );
+
+            foreach (var service in services)
+            {
+                var serviceId = service["id"];
+                var currentPrice = (int)service["price"];
+                var newPrice = currentPrice + 25;
+
+                await _session.ExecuteAsync(
+                    new SimpleStatement(
+                        "UPDATE services SET price = ? WHERE id = ?",
+                        newPrice,
+                        serviceId
+                    )
+                );
+            }
         }
 
         public async Task UpdateRoomsPriceInactiveAsync()
         {
-            var query = "UPDATE rooms SET pricepernight = pricepernight * 0.8 WHERE isactive = false";
-            await _session.ExecuteAsync(new SimpleStatement(query));
+            var rooms = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id, pricepernight FROM rooms WHERE isactive = false")
+            );
+
+            foreach (var room in rooms)
+            {
+                var roomId = room["id"];
+                var currentPrice = (int)room["pricepernight"];
+                var newPrice = (int)(currentPrice * 0.8);
+
+                await _session.ExecuteAsync(
+                    new SimpleStatement(
+                        "UPDATE rooms SET pricepernight = ? WHERE id = ?",
+                        newPrice,
+                        roomId
+                    )
+                );
+            }
         }
 
         public async Task UpdateRoomsPriceFutureReservationsAsync()
         {
-            var query = "UPDATE rooms SET pricepernight = pricepernight - 15";
-            await _session.ExecuteAsync(new SimpleStatement(query));
+            var reservations = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT roomid, checkindate FROM reservations")
+            );
+
+            var futureRoomIds = reservations
+                .Where(r => ((DateTime)r["checkindate"]) > DateTime.UtcNow)
+                .Select(r => r["roomid"])
+                .Distinct();
+
+            foreach (var roomId in futureRoomIds)
+            {
+                var room = await _session.ExecuteAsync(
+                    new SimpleStatement("SELECT pricepernight FROM rooms WHERE id = ?", roomId)
+                );
+                var currentPrice = (int)room.First()["pricepernight"];
+                var newPrice = currentPrice - 15;
+
+                await _session.ExecuteAsync(
+                    new SimpleStatement(
+                        "UPDATE rooms SET pricepernight = ? WHERE id = ?",
+                        newPrice,
+                        roomId
+                    )
+                );
+            }
         }
 
         // DELETE
+        public Task DeleteClientAsync(Guid clientId)
+        {
+            return _session.ExecuteAsync(new SimpleStatement("DELETE FROM clients WHERE id = ?", clientId));
+        }
+
+        public Task DeleteRoomAsync(Guid roomId)
+        {
+            return _session.ExecuteAsync(new SimpleStatement("DELETE FROM rooms WHERE id = ?", roomId));
+        }
+
+        public Task DeleteReservationAsync(Guid reservationId)
+        {
+            return _session.ExecuteAsync(new SimpleStatement("DELETE FROM reservations WHERE id = ?", reservationId));
+        }
+
         public async Task DeleteReservationsSmallRoomsAsync(int capacityThreshold)
         {
-            var roomsQuery = "SELECT id FROM rooms WHERE capacity < ? ALLOW FILTERING";
-            var preparedRooms = await _session.PrepareAsync(roomsQuery);
-            var roomsRows = await _session.ExecuteAsync(preparedRooms.Bind(capacityThreshold));
-            var roomIds = roomsRows.Select(r => (Guid)r["id"]).ToList();
+            var allRooms = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id, capacity FROM rooms")
+            );
 
-            var selectResQuery = "SELECT id FROM reservations WHERE roomid = ?";
-            var preparedSelectRes = await _session.PrepareAsync(selectResQuery);
+            var smallRoomIds = allRooms
+                .Where(r => (int)r["capacity"] < capacityThreshold)
+                .Select(r => r["id"])
+                .ToHashSet();
 
-            var reservationIds = new List<Guid>();
-            foreach (var roomId in roomIds)
+            if (!smallRoomIds.Any())
+                return;
+
+            var allReservations = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id, roomid, checkindate FROM reservations")
+            );
+
+            var reservationIdsToDelete = allReservations
+                .Where(r => smallRoomIds.Contains(r["roomid"]) && ((DateTime)r["checkindate"]) > DateTime.UtcNow)
+                .Select(r => r["id"]);
+
+            foreach (var resId in reservationIdsToDelete)
             {
-                var resRows = await _session.ExecuteAsync(preparedSelectRes.Bind(roomId));
-                reservationIds.AddRange(resRows.Select(r => (Guid)r["id"]));
-            }
-
-            var deleteQuery = "DELETE FROM reservations WHERE id = ?";
-            var preparedDelete = await _session.PrepareAsync(deleteQuery);
-
-            foreach (var resId in reservationIds)
-            {
-                await _session.ExecuteAsync(preparedDelete.Bind(resId));
+                await DeleteReservationAsync((Guid)resId);
             }
         }
 
-        public async Task DeleteReservationsServicesFutureAsync(int limitRows)
+        public async Task DeleteReservationsServicesFutureAsync(int topRows)
         {
-            var selectQuery = "SELECT id FROM reservations WHERE checkindate > toTimestamp(now()) LIMIT ?";
-            var preparedSelect = await _session.PrepareAsync(selectQuery);
-            var boundSelect = preparedSelect.Bind(limitRows);
+            var reservationIds = (await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id, checkindate FROM reservations")
+            )).Where(r => ((DateTime)r["checkindate"]) > DateTime.UtcNow)
+             .Take(topRows)
+             .Select(r => r["id"]);
 
-            var rows = await _session.ExecuteAsync(boundSelect);
-            var reservationIds = rows.Select(r => (Guid)r["id"]).ToList();
-
-            foreach (var reservationId in reservationIds)
+            foreach (var resId in reservationIds)
             {
-                var deleteQuery = "DELETE FROM reservationsservices WHERE reservationid = ?";
-                var preparedDelete = await _session.PrepareAsync(deleteQuery);
-                var boundDelete = preparedDelete.Bind(reservationId);
-                await _session.ExecuteAsync(boundDelete);
+                await _session.ExecuteAsync(
+                    new SimpleStatement("DELETE FROM reservationsservices WHERE reservationid = ?", resId)
+                );
             }
         }
 
         public async Task DeleteReservationsWithoutPaymentsAsync()
         {
-            var query = "DELETE FROM reservations";
-            await _session.ExecuteAsync(new SimpleStatement(query));
+            var paymentsRs = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT reservationid FROM payments")
+            );
+            var paymentsSet = paymentsRs.Select(p => p["reservationid"]).ToHashSet();
+
+            var reservationsRs = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id FROM reservations")
+            );
+
+            foreach (var res in reservationsRs)
+            {
+                var resId = (Guid)res["id"];
+                if (!paymentsSet.Contains(resId))
+                {
+                    await DeleteReservationAsync(resId);
+                }
+            }
         }
 
         public async Task DeleteInactiveClientsWithoutReservationsAsync()
         {
-            var query = "DELETE FROM clients WHERE isactive = false";
-            await _session.ExecuteAsync(new SimpleStatement(query));
+            var reservations = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT clientid FROM reservations")
+            );
+            var activeClientIds = reservations.Select(r => r["clientid"]).ToHashSet();
+
+            var clients = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id FROM clients WHERE isactive = false ALLOW FILTERING")
+            );
+
+            foreach (var client in clients)
+            {
+                var clientId = (Guid)client["id"];
+                if (!activeClientIds.Contains(clientId))
+                {
+                    await DeleteClientAsync(clientId);
+                }
+            }
         }
 
         public async Task DeleteRoomsWithoutReservationsAsync()
         {
-            var rs = await _session.ExecuteAsync(new SimpleStatement("SELECT id FROM rooms WHERE isactive = false ALLOW FILTERING"));
-            foreach (var row in rs)
+            var reservations = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT roomid FROM reservations")
+            );
+            var reservedRoomIds = reservations.Select(r => r["roomid"]).ToHashSet();
+
+            var inactiveRooms = await _session.ExecuteAsync(
+                new SimpleStatement("SELECT id FROM rooms WHERE isactive = false ALLOW FILTERING")
+            );
+
+            foreach (var room in inactiveRooms)
             {
-                var id = row.GetValue<Guid>("id");
-                await _session.ExecuteAsync(new SimpleStatement("DELETE FROM rooms WHERE id = ?", id));
+                var roomId = (Guid)room["id"];
+                if (!reservedRoomIds.Contains(roomId))
+                {
+                    await DeleteRoomAsync(roomId);
+                }
             }
         }
 
-        public async Task DeleteAllClientsAsync() => await _session.ExecuteAsync(new SimpleStatement("TRUNCATE clients"));
-        public async Task DeleteAllRoomsAsync() => await _session.ExecuteAsync(new SimpleStatement("TRUNCATE rooms"));
-        public async Task DeleteAllReservationsAsync() => await _session.ExecuteAsync(new SimpleStatement("TRUNCATE reservations"));
-        public async Task DeleteAllReservationsServicesAsync() => await _session.ExecuteAsync(new SimpleStatement("TRUNCATE reservationsservices"));
-        public async Task DeleteAllPaymentsAsync() => await _session.ExecuteAsync(new SimpleStatement("TRUNCATE payments"));
-        public async Task DeleteAllServicesAsync() => await _session.ExecuteAsync(new SimpleStatement("TRUNCATE services"));
+        public Task DeleteAllClientsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM clients"));
+        public Task DeleteAllRoomsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM rooms"));
+        public Task DeleteAllReservationsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM reservations"));
+        public Task DeleteAllReservationsServicesAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM reservationsservices"));
+        public Task DeleteAllPaymentsAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM payments"));
+        public Task DeleteAllServicesAsync() => _session.ExecuteAsync(new SimpleStatement("DELETE FROM services"));
     }
 }

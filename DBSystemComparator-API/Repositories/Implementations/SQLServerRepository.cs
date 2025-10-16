@@ -307,15 +307,10 @@ namespace DBSystemComparator_API.Repositories.Implementations
         }
 
         public Task<int> DeleteAllClientsAsync() => ExecuteNonQueryAsync("DELETE FROM Clients");
-
         public Task<int> DeleteAllRoomsAsync() => ExecuteNonQueryAsync("DELETE FROM Rooms");
-
         public Task<int> DeleteAllReservationsAsync() => ExecuteNonQueryAsync("DELETE FROM Reservations");
-
         public Task<int> DeleteAllReservationsServicesAsync() => ExecuteNonQueryAsync("DELETE FROM ReservationsServices");
-
         public Task<int> DeleteAllPaymentsAsync() => ExecuteNonQueryAsync("DELETE FROM Payments");
-
         public Task<int> DeleteAllServicesAsync() => ExecuteNonQueryAsync("DELETE FROM Services");
     }
 }
