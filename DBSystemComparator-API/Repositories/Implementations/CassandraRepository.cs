@@ -8,6 +8,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
     public class CassandraRepository : ICassandraRepository
     {
         private readonly Cassandra.ISession _session;
+        private readonly int ChunkSize = 100;
 
         public CassandraRepository(Cassandra.ISession session)
         {
@@ -365,7 +366,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             );
 
             var futureRoomIds = reservations
-                .Where(r => ((DateTime)r["checkindate"]) > DateTime.UtcNow)
+                .Where(r => ((DateTime)r["checkindate"]) > DateTime.Now)
                 .Select(r => r["roomid"])
                 .Distinct();
 
@@ -422,7 +423,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             );
 
             var reservationIdsToDelete = allReservations
-                .Where(r => smallRoomIds.Contains(r["roomid"]) && ((DateTime)r["checkindate"]) > DateTime.UtcNow)
+                .Where(r => smallRoomIds.Contains(r["roomid"]) && ((DateTime)r["checkindate"]) > DateTime.Now)
                 .Select(r => r["id"]);
 
             foreach (var resId in reservationIdsToDelete)
@@ -435,7 +436,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
         {
             var reservationIds = (await _session.ExecuteAsync(
                 new SimpleStatement("SELECT id, checkindate FROM reservations")
-            )).Where(r => ((DateTime)r["checkindate"]) > DateTime.UtcNow)
+            )).Where(r => ((DateTime)r["checkindate"]) > DateTime.Now)
              .Take(topRows)
              .Select(r => r["id"]);
 
@@ -516,5 +517,164 @@ namespace DBSystemComparator_API.Repositories.Implementations
         public Task DeleteAllReservationsServicesAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE reservationsservices"));
         public Task DeleteAllPaymentsAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE payments"));
         public Task DeleteAllServicesAsync() => _session.ExecuteAsync(new SimpleStatement("TRUNCATE services"));
+
+        private IEnumerable<List<T>> Chunk<T>(IEnumerable<T> source, int chunkSize)
+        {
+            var list = new List<T>();
+            foreach (var item in source)
+            {
+                list.Add(item);
+                if (list.Count >= chunkSize)
+                {
+                    yield return list;
+                    list = new List<T>();
+                }
+            }
+            if (list.Count > 0) yield return list;
+        }
+
+        public async Task CreateClientsBatchAsync(IEnumerable<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)> clients)
+        {
+            var statements = clients.Select(c =>
+            {
+                var id = Guid.NewGuid();
+                return new SimpleStatement(@"
+                    INSERT INTO clients (id, firstname, secondname, lastname, email, dateofbirth, address, phonenumber, isactive)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    id, c.firstName, c.secondName, c.lastName, c.email, c.dob, c.address, c.phone, c.isActive);
+            });
+
+            foreach (var chunk in Chunk(statements, ChunkSize))
+            {
+                var batch = new BatchStatement();
+                foreach (var stmt in chunk) batch.Add(stmt);
+                await _session.ExecuteAsync(batch);
+            }
+        }
+
+        public async Task CreateRoomsBatchAsync(IEnumerable<(int number, int capacity, int pricePerNight, bool isActive)> rooms)
+        {
+            var statements = rooms.Select(r =>
+            {
+                var id = Guid.NewGuid();
+                return new SimpleStatement(@"
+                    INSERT INTO rooms (id, number, capacity, pricepernight, isactive)
+                    VALUES (?, ?, ?, ?, ?)",
+                    id, r.number, r.capacity, r.pricePerNight, r.isActive);
+            });
+
+            foreach (var chunk in Chunk(statements, ChunkSize))
+            {
+                var batch = new BatchStatement();
+                foreach (var stmt in chunk) batch.Add(stmt);
+                await _session.ExecuteAsync(batch);
+            }
+        }
+
+        public async Task CreateServicesBatchAsync(IEnumerable<(string name, int price, bool isActive)> services)
+        {
+            var statements = services.Select(s =>
+            {
+                var id = Guid.NewGuid();
+                return new SimpleStatement(@"
+                    INSERT INTO services (id, name, price, isactive)
+                    VALUES (?, ?, ?, ?)",
+                    id, s.name, s.price, s.isActive);
+            });
+
+            foreach (var chunk in Chunk(statements, ChunkSize))
+            {
+                var batch = new BatchStatement();
+                foreach (var stmt in chunk) batch.Add(stmt);
+                await _session.ExecuteAsync(batch);
+            }
+        }
+
+        public async Task CreateReservationsBatchAsync(IEnumerable<(Guid clientId, Guid roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)> reservations)
+        {
+            var statements = reservations.Select(r =>
+            {
+                var id = Guid.NewGuid();
+                return new SimpleStatement(@"
+                    INSERT INTO reservations (id, clientid, roomid, checkindate, checkoutdate, creationdate)
+                    VALUES (?, ?, ?, ?, ?, ?)",
+                    id, r.clientId, r.roomId, r.checkIn, r.checkOut, r.creationDate);
+            });
+
+            foreach (var chunk in Chunk(statements, ChunkSize))
+            {
+                var batch = new BatchStatement();
+                foreach (var stmt in chunk) batch.Add(stmt);
+                await _session.ExecuteAsync(batch);
+            }
+        }
+
+        public async Task CreatePaymentsBatchAsync(IEnumerable<(Guid reservationId, string description, int sum, DateTime creationDate)> payments)
+        {
+            var statements = payments.Select(p =>
+            {
+                var id = Guid.NewGuid();
+                return new SimpleStatement(@"
+                    INSERT INTO payments (id, reservationid, description, sum, creationdate)
+                    VALUES (?, ?, ?, ?, ?)",
+                    id, p.reservationId, p.description, p.sum, p.creationDate);
+            });
+
+            foreach (var chunk in Chunk(statements, ChunkSize))
+            {
+                var batch = new BatchStatement();
+                foreach (var stmt in chunk) batch.Add(stmt);
+                await _session.ExecuteAsync(batch);
+            }
+        }
+
+        public async Task CreateReservationsServicesBatchAsync(IEnumerable<(Guid reservationId, Guid serviceId, DateTime creationDate)> resServices)
+        {
+            var statements = resServices.Select(rs =>
+                new SimpleStatement(@"
+                    INSERT INTO reservationsservices (reservationid, serviceid, creationdate)
+                    VALUES (?, ?, ?)",
+                    rs.reservationId, rs.serviceId, rs.creationDate)
+            );
+
+            foreach (var chunk in Chunk(statements, ChunkSize))
+            {
+                var batch = new BatchStatement();
+                foreach (var stmt in chunk) batch.Add(stmt);
+                await _session.ExecuteAsync(batch);
+            }
+        }
+
+        public async Task<List<Guid>> GetAllClientIdsAsync()
+        {
+            var result = new List<Guid>();
+            var rs = await _session.ExecuteAsync(new SimpleStatement("SELECT id FROM clients"));
+            foreach (var row in rs) result.Add((Guid)row["id"]);
+            return result;
+        }
+
+        public async Task<List<Guid>> GetAllRoomIdsAsync()
+        {
+            var result = new List<Guid>();
+            var rs = await _session.ExecuteAsync(new SimpleStatement("SELECT id FROM rooms"));
+            foreach (var row in rs) result.Add((Guid)row["id"]);
+            return result;
+        }
+
+        public async Task<List<Guid>> GetAllServiceIdsAsync()
+        {
+            var result = new List<Guid>();
+            var rs = await _session.ExecuteAsync(new SimpleStatement("SELECT id FROM services"));
+            foreach (var row in rs) result.Add((Guid)row["id"]);
+            return result;
+        }
+
+        public async Task<List<Guid>> GetAllReservationIdsAsync()
+        {
+            var result = new List<Guid>();
+            var rs = await _session.ExecuteAsync(new SimpleStatement("SELECT id FROM reservations"));
+            foreach (var row in rs) result.Add((Guid)row["id"]);
+            return result;
+        }
     }
 }

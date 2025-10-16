@@ -37,203 +37,214 @@ namespace DBSystemComparator_API.Services.Implementations
 
         public async Task<ResponseDTO> GenerateDataAsync(GenerateDataDTO generateDataDTO)
         {
-            var deleteTasks = new List<Task>
-            {
-                _postgreSQLRepository.DeleteAllPaymentsAsync(),
-                _postgreSQLRepository.DeleteAllReservationsServicesAsync(),
-                _postgreSQLRepository.DeleteAllReservationsAsync(),
-                _postgreSQLRepository.DeleteAllServicesAsync(),
-                _postgreSQLRepository.DeleteAllRoomsAsync(),
-                _postgreSQLRepository.DeleteAllClientsAsync(),
-
-                _sqlServerRepository.DeleteAllPaymentsAsync(),
-                _sqlServerRepository.DeleteAllReservationsServicesAsync(),
-                _sqlServerRepository.DeleteAllReservationsAsync(),
-                _sqlServerRepository.DeleteAllServicesAsync(),
-                _sqlServerRepository.DeleteAllRoomsAsync(),
-                _sqlServerRepository.DeleteAllClientsAsync(),
-
-                _mongoDBRepository.DeleteAllPaymentsAsync(),
-                _mongoDBRepository.DeleteAllReservationsServicesAsync(),
-                _mongoDBRepository.DeleteAllReservationsAsync(),
-                _mongoDBRepository.DeleteAllServicesAsync(),
-                _mongoDBRepository.DeleteAllRoomsAsync(),
-                _mongoDBRepository.DeleteAllClientsAsync(),
-
-                _cassandraRepository.DeleteAllPaymentsAsync(),
-                _cassandraRepository.DeleteAllReservationsServicesAsync(),
-                _cassandraRepository.DeleteAllReservationsAsync(),
-                _cassandraRepository.DeleteAllServicesAsync(),
-                _cassandraRepository.DeleteAllRoomsAsync(),
-                _cassandraRepository.DeleteAllClientsAsync()
-            };
-
-            await Task.WhenAll(deleteTasks);
-
+            int batchSize = 5000;
             var random = new Random();
 
-            var clients = new List<(
-                int index,
-                int pgId,
-                int sqlId,
-                string mongoId,
-                Guid cassId,
-                string firstName,
-                string secondName,
-                string lastName,
-                string email,
-                DateTime dob,
-                string address,
-                string phone,
-                bool isActive)>();
+            await _sqlServerRepository.DeleteAllClientsAsync();
+            await _sqlServerRepository.DeleteAllRoomsAsync();
+            await _sqlServerRepository.DeleteAllServicesAsync();
+            await _sqlServerRepository.DeleteAllReservationsAsync();
+            await _sqlServerRepository.DeleteAllReservationsServicesAsync();
+            await _sqlServerRepository.DeleteAllPaymentsAsync();
 
-            var rooms = new List<(
-                int index,
-                int pgId,
-                int sqlId,
-                string mongoId,
-                Guid cassId,
-                int number,
-                int capacity,
-                int pricePerNight,
-                bool isActive)>();
+            await _postgreSQLRepository.DeleteAllClientsAsync();
+            await _postgreSQLRepository.DeleteAllRoomsAsync();
+            await _postgreSQLRepository.DeleteAllServicesAsync();
+            await _postgreSQLRepository.DeleteAllReservationsAsync();
+            await _postgreSQLRepository.DeleteAllReservationsServicesAsync();
+            await _postgreSQLRepository.DeleteAllPaymentsAsync();
 
-            var services = new List<(
-                int index,
-                int pgId,
-                int sqlId,
-                string mongoId,
-                Guid cassId,
-                string name,
-                int price,
-                bool isActive)>();
+            await _mongoDBRepository.DeleteAllClientsAsync();
+            await _mongoDBRepository.DeleteAllRoomsAsync();
+            await _mongoDBRepository.DeleteAllServicesAsync();
+            await _mongoDBRepository.DeleteAllReservationsAsync();
+            await _mongoDBRepository.DeleteAllReservationsServicesAsync();
+            await _mongoDBRepository.DeleteAllPaymentsAsync();
 
-            var reservations = new List<(
-                int index,
-                int pgId,
-                int sqlId,
-                string mongoId,
-                Guid cassId,
-                int clientPgId,
-                int clientSqlId,
-                string clientMongoId,
-                Guid clientCassId,
-                int roomPgId,
-                int roomSqlId,
-                string roomMongoId,
-                Guid roomCassId,
-                DateTime checkIn,
-                DateTime checkOut,
-                DateTime creationDate)>();
+            await _cassandraRepository.DeleteAllClientsAsync();
+            await _cassandraRepository.DeleteAllRoomsAsync();
+            await _cassandraRepository.DeleteAllServicesAsync();
+            await _cassandraRepository.DeleteAllReservationsAsync();
+            await _cassandraRepository.DeleteAllReservationsServicesAsync();
+            await _cassandraRepository.DeleteAllPaymentsAsync();
 
-            for (int i = 1; i <= generateDataDTO.Count; i++)
+            var allClientIdsSQL = new List<int>();
+            var allRoomIdsSQL = new List<int>();
+            var allServiceIdsSQL = new List<int>();
+            var allReservationIdsSQL = new List<int>();
+
+            var allClientIdsPG = new List<int>();
+            var allRoomIdsPG = new List<int>();
+            var allServiceIdsPG = new List<int>();
+            var allReservationIdsPG = new List<int>();
+
+            var allClientIdsMongo = new List<string>();
+            var allRoomIdsMongo = new List<string>();
+            var allServiceIdsMongo = new List<string>();
+            var allReservationIdsMongo = new List<string>();
+
+            var allClientIdsCassandra = new List<Guid>();
+            var allRoomIdsCassandra = new List<Guid>();
+            var allServiceIdsCassandra = new List<Guid>();
+            var allReservationIdsCassandra = new List<Guid>();
+
+            for (int batchStart = 1; batchStart <= generateDataDTO.Count; batchStart += batchSize)
             {
-                var firstName = $"First{i}";
-                var secondName = $"Second{i}";
-                var lastName = $"Last{i}";
-                var email = $"client{i}@example.com";
-                var dob = DateTime.UtcNow.AddYears(-20 - random.Next(20));
-                var address = $"Address {i}";
-                var phone = $"555-00{i:D3}";
-                var clientIsActive = random.Next(2) == 0;
+                int batchEnd = Math.Min(batchStart + batchSize - 1, generateDataDTO.Count);
 
-                var pgClientId = await _postgreSQLRepository.CreateClientAsync(firstName, secondName, lastName, email, dob, address, phone, clientIsActive);
-                var sqlClientId = await _sqlServerRepository.CreateClientAsync(firstName, secondName, lastName, email, dob, address, phone, clientIsActive);
-                var mongoClientId = await _mongoDBRepository.CreateClientAsync(firstName, secondName, lastName, email, dob, address, phone, clientIsActive);
-                var cassClientId = await _cassandraRepository.CreateClientAsync(firstName, secondName, lastName, email, dob, address, phone, clientIsActive);
+                var clientsBatch = new List<(string, string, string, string, DateTime, string, string, bool)>();
+                var roomsBatch = new List<(int, int, int, bool)>();
+                var servicesBatch = new List<(string, int, bool)>();
 
-                clients.Add((
-                    i,
-                    pgClientId,
-                    sqlClientId,
-                    mongoClientId,
-                    cassClientId,
-                    firstName,
-                    secondName,
-                    lastName,
-                    email,
-                    dob,
-                    address,
-                    phone,
-                    clientIsActive));
-
-                var number = 100 + i;
-                var capacity = random.Next(1, 5);
-                var price = random.Next(100, 400);
-                var roomIsActive = random.Next(2) == 0;
-
-                var pgRoomId = await _postgreSQLRepository.CreateRoomAsync(number, capacity, price, roomIsActive);
-                var sqlRoomId = await _sqlServerRepository.CreateRoomAsync(number, capacity, price, roomIsActive);
-                var mongoRoomId = await _mongoDBRepository.CreateRoomAsync(number, capacity, price, roomIsActive);
-                var cassRoomId = await _cassandraRepository.CreateRoomAsync(number, capacity, price, roomIsActive);
-
-                rooms.Add((i, pgRoomId, sqlRoomId, mongoRoomId, cassRoomId, number, capacity, price, roomIsActive));
-
-                var serviceName = $"Service {i}";
-                var servicePrice = random.Next(20, 120);
-                var serviceIsActive = random.Next(2) == 0;
-
-                var pgServiceId = await _postgreSQLRepository.CreateServiceAsync(serviceName, servicePrice, serviceIsActive);
-                var sqlServiceId = await _sqlServerRepository.CreateServiceAsync(serviceName, servicePrice, serviceIsActive);
-                var mongoServiceId = await _mongoDBRepository.CreateServiceAsync(serviceName, servicePrice, serviceIsActive);
-                var cassServiceId = await _cassandraRepository.CreateServiceAsync(serviceName, servicePrice, serviceIsActive);
-
-                services.Add((i, pgServiceId, sqlServiceId, mongoServiceId, cassServiceId, serviceName, servicePrice, serviceIsActive));
-            }
-
-            for (int i = 1; i <= generateDataDTO.Count; i++)
-            {
-                var client = clients[random.Next(clients.Count)];
-                var room = rooms[random.Next(rooms.Count)];
-
-                var checkIn = DateTime.UtcNow.AddDays(random.Next(1, 30));
-                var checkOut = checkIn.AddDays(random.Next(2, 10));
-                var creationDate = DateTime.UtcNow.AddDays(-random.Next(1, 10));
-
-                var pgResId = await _postgreSQLRepository.CreateReservationAsync(client.pgId, room.pgId, checkIn, checkOut, creationDate);
-                var sqlResId = await _sqlServerRepository.CreateReservationAsync(client.sqlId, room.sqlId, checkIn, checkOut, creationDate);
-                var mongoResId = await _mongoDBRepository.CreateReservationAsync(client.mongoId, room.mongoId, checkIn, checkOut, creationDate);
-                var cassResId = await _cassandraRepository.CreateReservationAsync(client.cassId, room.cassId, checkIn, checkOut, creationDate);
-
-                reservations.Add((
-                    i,
-                    pgResId,
-                    sqlResId,
-                    mongoResId,
-                    cassResId,
-                    client.pgId,
-                    client.sqlId,
-                    client.mongoId,
-                    client.cassId,
-                    room.pgId,
-                    room.sqlId,
-                    room.mongoId,
-                    room.cassId,
-                    checkIn,
-                    checkOut,
-                    creationDate));
-
-                var description = $"Payment for reservation {i}";
-                var sum = random.Next(100, 800);
-                var payDate = DateTime.UtcNow;
-
-                await _postgreSQLRepository.CreatePaymentAsync(pgResId, description, sum, payDate);
-                await _sqlServerRepository.CreatePaymentAsync(sqlResId, description, sum, payDate);
-                await _mongoDBRepository.CreatePaymentAsync(mongoResId, description, sum, payDate);
-                await _cassandraRepository.CreatePaymentAsync(cassResId, description, sum, payDate);
-            }
-
-            foreach (var res in reservations)
-            {
-                var chosenServices = services.OrderBy(_ => random.Next()).Take(1).ToList();
-
-                foreach (var s in chosenServices)
+                for (int i = batchStart; i <= batchEnd; i++)
                 {
-                    await _postgreSQLRepository.CreateReservationServiceAsync(res.pgId, s.pgId, DateTime.UtcNow);
-                    await _sqlServerRepository.CreateReservationServiceAsync(res.sqlId, s.sqlId, DateTime.UtcNow);
-                    await _mongoDBRepository.CreateReservationServiceAsync(res.mongoId, s.mongoId, DateTime.UtcNow);
-                    await _cassandraRepository.CreateReservationServiceAsync(res.cassId, s.cassId, DateTime.UtcNow);
+                    clientsBatch.Add(($"FirstName {i}", $"SecondName {i}", $"LastName {i}", $"email{i}@email.com", DateTime.Now.AddYears(-20 - random.Next(20)), $"Address {i}", random.Next(900000000, 999999999).ToString(), random.Next(2) == 0));
+                    roomsBatch.Add((100 + i, random.Next(1, 10), random.Next(50, 5000), random.Next(2) == 0));
+                    servicesBatch.Add(($"Service {i}", random.Next(10, 200), random.Next(2) == 0));
                 }
+
+                await Task.WhenAll(
+                    _sqlServerRepository.CreateClientsBatchAsync(clientsBatch),
+                    _sqlServerRepository.CreateRoomsBatchAsync(roomsBatch),
+                    _sqlServerRepository.CreateServicesBatchAsync(servicesBatch),
+
+                    _postgreSQLRepository.CreateClientsBatchAsync(clientsBatch),
+                    _postgreSQLRepository.CreateRoomsBatchAsync(roomsBatch),
+                    _postgreSQLRepository.CreateServicesBatchAsync(servicesBatch),
+
+                    _mongoDBRepository.CreateClientsBatchAsync(clientsBatch),
+                    _mongoDBRepository.CreateRoomsBatchAsync(roomsBatch),
+                    _mongoDBRepository.CreateServicesBatchAsync(servicesBatch),
+
+                    _cassandraRepository.CreateClientsBatchAsync(clientsBatch),
+                    _cassandraRepository.CreateRoomsBatchAsync(roomsBatch),
+                    _cassandraRepository.CreateServicesBatchAsync(servicesBatch)
+                );
+
+                allClientIdsSQL = await _sqlServerRepository.GetAllClientIdsAsync();
+                allRoomIdsSQL = await _sqlServerRepository.GetAllRoomIdsAsync();
+                allServiceIdsSQL = await _sqlServerRepository.GetAllServiceIdsAsync();
+
+                allClientIdsPG = await _postgreSQLRepository.GetAllClientIdsAsync();
+                allRoomIdsPG = await _postgreSQLRepository.GetAllRoomIdsAsync();
+                allServiceIdsPG = await _postgreSQLRepository.GetAllServiceIdsAsync();
+
+                allClientIdsMongo = await _mongoDBRepository.GetAllClientIdsAsync();
+                allRoomIdsMongo = await _mongoDBRepository.GetAllRoomIdsAsync();
+                allServiceIdsMongo = await _mongoDBRepository.GetAllServiceIdsAsync();
+
+                allClientIdsCassandra = await _cassandraRepository.GetAllClientIdsAsync();
+                allRoomIdsCassandra = await _cassandraRepository.GetAllRoomIdsAsync();
+                allServiceIdsCassandra = await _cassandraRepository.GetAllServiceIdsAsync();
+            }
+
+            for (int batchStart = 0; batchStart < generateDataDTO.Count; batchStart += batchSize)
+            {
+                int batchEnd = Math.Min(batchStart + batchSize, generateDataDTO.Count);
+
+                var reservationsSQL = new List<(int, int, DateTime, DateTime, DateTime)>();
+                var reservationsPG = new List<(int, int, DateTime, DateTime, DateTime)>();
+                var reservationsMongo = new List<(string, string, DateTime, DateTime, DateTime)>();
+                var reservationsCassandra = new List<(Guid, Guid, DateTime, DateTime, DateTime)>();
+
+                for (int i = batchStart; i < batchEnd; i++)
+                {
+                    var checkIn = DateTime.Now.AddDays(-random.Next(1, 1000));
+                    var checkOut = checkIn.AddDays(random.Next(1, 14));
+                    var now = DateTime.Now;
+
+                    reservationsSQL.Add((allClientIdsSQL[i], allRoomIdsSQL[i], checkIn, checkOut, now));
+                    reservationsPG.Add((allClientIdsPG[i], allRoomIdsPG[i], checkIn, checkOut, now));
+                    reservationsMongo.Add((allClientIdsMongo[i], allRoomIdsMongo[i], checkIn, checkOut, now));
+                    reservationsCassandra.Add((allClientIdsCassandra[i], allRoomIdsCassandra[i], checkIn, checkOut, now));
+                }
+
+                await Task.WhenAll(
+                    _sqlServerRepository.CreateReservationsBatchAsync(reservationsSQL),
+                    _postgreSQLRepository.CreateReservationsBatchAsync(reservationsPG),
+                    _mongoDBRepository.CreateReservationsBatchAsync(reservationsMongo),
+                    _cassandraRepository.CreateReservationsBatchAsync(reservationsCassandra)
+                );
+
+                allReservationIdsSQL = await _sqlServerRepository.GetAllReservationIdsAsync();
+                allReservationIdsPG = await _postgreSQLRepository.GetAllReservationIdsAsync();
+                allReservationIdsMongo = await _mongoDBRepository.GetAllReservationIdsAsync();
+                allReservationIdsCassandra = await _cassandraRepository.GetAllReservationIdsAsync();
+            }
+
+            for (int batchStart = 0; batchStart < generateDataDTO.Count; batchStart += batchSize)
+            {
+                int batchEnd = Math.Min(batchStart + batchSize, generateDataDTO.Count);
+
+                var resServicesSQL = new List<(int, int, DateTime)>();
+                var resServicesPG = new List<(int, int, DateTime)>();
+                var resServicesMongo = new List<(string, string, DateTime)>();
+                var resServicesCassandra = new List<(Guid, Guid, DateTime)>();
+
+                for (int i = batchStart; i < batchEnd; i++)
+                {
+                    int serviceIdSQL;
+                    int serviceIdPG;
+                    string serviceIdMongo;
+                    Guid serviceIdCassandra;
+                    var now = DateTime.Now;
+
+                    if (allServiceIdsSQL.Count == allServiceIdsPG.Count && allServiceIdsPG.Count == allServiceIdsMongo.Count && allServiceIdsMongo.Count == allServiceIdsCassandra.Count)
+                    {
+                        int idx = random.Next(allServiceIdsSQL.Count);
+                        serviceIdSQL = allServiceIdsSQL[idx];
+                        serviceIdPG = allServiceIdsPG[idx];
+                        serviceIdMongo = allServiceIdsMongo[idx];
+                        serviceIdCassandra = allServiceIdsCassandra[idx];
+                    }
+                    else
+                    {
+                        serviceIdSQL = allServiceIdsSQL[random.Next(allServiceIdsSQL.Count)];
+                        serviceIdPG = allServiceIdsPG[random.Next(allServiceIdsPG.Count)];
+                        serviceIdMongo = allServiceIdsMongo[random.Next(allServiceIdsMongo.Count)];
+                        serviceIdCassandra = allServiceIdsCassandra[random.Next(allServiceIdsCassandra.Count)];
+                    }
+
+                    resServicesSQL.Add((allReservationIdsSQL[i], serviceIdSQL, now));
+                    resServicesPG.Add((allReservationIdsPG[i], serviceIdPG, now));
+                    resServicesMongo.Add((allReservationIdsMongo[i], serviceIdMongo, now));
+                    resServicesCassandra.Add((allReservationIdsCassandra[i], serviceIdCassandra, now));
+                }
+
+                await Task.WhenAll(
+                    _sqlServerRepository.CreateReservationsServicesBatchAsync(resServicesSQL),
+                    _postgreSQLRepository.CreateReservationsServicesBatchAsync(resServicesPG),
+                    _mongoDBRepository.CreateReservationsServicesBatchAsync(resServicesMongo),
+                    _cassandraRepository.CreateReservationsServicesBatchAsync(resServicesCassandra)
+                );
+            }
+
+            for (int batchStart = 0; batchStart < generateDataDTO.Count; batchStart += batchSize)
+            {
+                int batchEnd = Math.Min(batchStart + batchSize, generateDataDTO.Count);
+
+                var paymentsSQL = new List<(int, string, int, DateTime)>();
+                var paymentsPG = new List<(int, string, int, DateTime)>();
+                var paymentsMongo = new List<(string, string, int, DateTime)>();
+                var paymentsCassandra = new List<(Guid, string, int, DateTime)>();
+
+                for (int i = batchStart; i < batchEnd; i++)
+                {
+                    var sum = random.Next(500, 5000);
+                    var now = DateTime.Now;
+
+                    paymentsSQL.Add((allReservationIdsSQL[i], $"Payment {i}", sum, now));
+                    paymentsPG.Add((allReservationIdsPG[i], $"Payment {i}", sum, now));
+                    paymentsMongo.Add((allReservationIdsMongo[i], $"Payment {i}", sum, now));
+                    paymentsCassandra.Add((allReservationIdsCassandra[i], $"Payment {i}", sum, now));
+                }
+
+                await Task.WhenAll(
+                    _sqlServerRepository.CreatePaymentsBatchAsync(paymentsSQL),
+                    _postgreSQLRepository.CreatePaymentsBatchAsync(paymentsPG),
+                    _mongoDBRepository.CreatePaymentsBatchAsync(paymentsMongo),
+                    _cassandraRepository.CreatePaymentsBatchAsync(paymentsCassandra)
+                );
             }
 
             return new ResponseDTO(SUCCESS.DATA_HAS_BEEN_GENERATED);

@@ -1,6 +1,8 @@
 ﻿using DBSystemComparator_API.Models.DTOs;
 using DBSystemComparator_API.Repositories.Interfaces;
 using Npgsql;
+using System.Data;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace DBSystemComparator_API.Repositories.Implementations
 {
@@ -356,5 +358,182 @@ namespace DBSystemComparator_API.Repositories.Implementations
         public Task<int> DeleteAllReservationsServicesAsync() => ExecuteNonQueryAsync("DELETE FROM reservationsservices");
         public Task<int> DeleteAllPaymentsAsync() => ExecuteNonQueryAsync("DELETE FROM payments");
         public Task<int> DeleteAllServicesAsync() => ExecuteNonQueryAsync("DELETE FROM services");
+
+        private async Task<int> ExecuteNonQueryAsync(string sql)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+            await using var cmd = new NpgsqlCommand(sql, connection);
+            return await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task CreateClientsBatchAsync(IEnumerable<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)> clients)
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("FirstName", typeof(string));
+            dt.Columns.Add("SecondName", typeof(string));
+            dt.Columns.Add("LastName", typeof(string));
+            dt.Columns.Add("Email", typeof(string));
+            dt.Columns.Add("DateOfBirth", typeof(DateTime));
+            dt.Columns.Add("Address", typeof(string));
+            dt.Columns.Add("PhoneNumber", typeof(string));
+            dt.Columns.Add("IsActive", typeof(bool));
+
+            foreach (var c in clients)
+                dt.Rows.Add(c.firstName, c.secondName, c.lastName, c.email, c.dob, c.address, c.phone, c.isActive);
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var writer = connection.BeginBinaryImport("COPY Clients (FirstName, SecondName, LastName, Email, DateOfBirth, Address, PhoneNumber, IsActive) FROM STDIN (FORMAT BINARY)");
+            foreach (DataRow row in dt.Rows)
+            {
+                writer.StartRow();
+                for (int i = 0; i < dt.Columns.Count; i++)
+                    writer.Write(row[i]);
+            }
+            await writer.CompleteAsync();
+        }
+
+        public async Task CreateRoomsBatchAsync(IEnumerable<(int number, int capacity, int pricePerNight, bool isActive)> rooms)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var writer = connection.BeginBinaryImport("COPY Rooms (Number, Capacity, PricePerNight, IsActive) FROM STDIN (FORMAT BINARY)");
+            foreach (var r in rooms)
+            {
+                writer.StartRow();
+                writer.Write(r.number);
+                writer.Write(r.capacity);
+                writer.Write(r.pricePerNight);
+                writer.Write(r.isActive);
+            }
+            await writer.CompleteAsync();
+        }
+
+        public async Task CreateServicesBatchAsync(IEnumerable<(string name, int price, bool isActive)> services)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var writer = connection.BeginBinaryImport("COPY Services (Name, Price, IsActive) FROM STDIN (FORMAT BINARY)");
+            foreach (var s in services)
+            {
+                writer.StartRow();
+                writer.Write(s.name);
+                writer.Write(s.price);
+                writer.Write(s.isActive);
+            }
+            await writer.CompleteAsync();
+        }
+
+        public async Task CreateReservationsBatchAsync(IEnumerable<(int clientId, int roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)> reservations)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var writer = connection.BeginBinaryImport("COPY Reservations (ClientId, RoomId, CheckInDate, CheckOutDate, CreationDate) FROM STDIN (FORMAT BINARY)");
+            foreach (var r in reservations)
+            {
+                writer.StartRow();
+                writer.Write(r.clientId);
+                writer.Write(r.roomId);
+                writer.Write(r.checkIn);
+                writer.Write(r.checkOut);
+                writer.Write(r.creationDate);
+            }
+            await writer.CompleteAsync();
+        }
+
+        public async Task CreatePaymentsBatchAsync(IEnumerable<(int reservationId, string description, int sum, DateTime creationDate)> payments)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var writer = connection.BeginBinaryImport("COPY Payments (ReservationId, Description, Sum, CreationDate) FROM STDIN (FORMAT BINARY)");
+            foreach (var p in payments)
+            {
+                writer.StartRow();
+                writer.Write(p.reservationId);
+                writer.Write(p.description);
+                writer.Write(p.sum);
+                writer.Write(p.creationDate);
+            }
+            await writer.CompleteAsync();
+        }
+
+        public async Task CreateReservationsServicesBatchAsync(IEnumerable<(int reservationId, int serviceId, DateTime creationDate)> resServices)
+        {
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            using var writer = connection.BeginBinaryImport("COPY ReservationsServices (ReservationId, ServiceId, CreationDate) FROM STDIN (FORMAT BINARY)");
+            foreach (var rs in resServices)
+            {
+                writer.StartRow();
+                writer.Write(rs.reservationId);
+                writer.Write(rs.serviceId);
+                writer.Write(rs.creationDate);
+            }
+            await writer.CompleteAsync();
+        }
+
+        // GetAll Ids
+        public async Task<List<int>> GetAllClientIdsAsync()
+        {
+            var ids = new List<int>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand("SELECT Id FROM Clients", connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                ids.Add(reader.GetInt32(0));
+
+            return ids;
+        }
+
+        public async Task<List<int>> GetAllRoomIdsAsync()
+        {
+            var ids = new List<int>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand("SELECT Id FROM Rooms", connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                ids.Add(reader.GetInt32(0));
+
+            return ids;
+        }
+
+        public async Task<List<int>> GetAllServiceIdsAsync()
+        {
+            var ids = new List<int>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand("SELECT Id FROM Services", connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                ids.Add(reader.GetInt32(0));
+
+            return ids;
+        }
+
+        public async Task<List<int>> GetAllReservationIdsAsync()
+        {
+            var ids = new List<int>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            await using var cmd = new NpgsqlCommand("SELECT Id FROM Reservations", connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                ids.Add(reader.GetInt32(0));
+
+            return ids;
+        }
     }
 }

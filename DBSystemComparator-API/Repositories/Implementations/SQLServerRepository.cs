@@ -1,6 +1,7 @@
 ﻿using DBSystemComparator_API.Models.DTOs;
 using DBSystemComparator_API.Repositories.Interfaces;
 using Microsoft.Data.SqlClient;
+using System.Data;
 
 namespace DBSystemComparator_API.Repositories.Implementations
 {
@@ -350,5 +351,245 @@ namespace DBSystemComparator_API.Repositories.Implementations
         public Task<int> DeleteAllReservationsServicesAsync() => ExecuteNonQueryAsync("DELETE FROM ReservationsServices");
         public Task<int> DeleteAllPaymentsAsync() => ExecuteNonQueryAsync("DELETE FROM Payments");
         public Task<int> DeleteAllServicesAsync() => ExecuteNonQueryAsync("DELETE FROM Services");
+
+        private async Task<int> ExecuteNonQueryAsync(string sql)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand(sql, connection);
+            return await cmd.ExecuteNonQueryAsync();
+        }
+
+        public async Task CreateClientsBatchAsync(IEnumerable<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)> clients)
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("FirstName", typeof(string));
+            dt.Columns.Add("SecondName", typeof(string));
+            dt.Columns.Add("LastName", typeof(string));
+            dt.Columns.Add("Email", typeof(string));
+            dt.Columns.Add("DateOfBirth", typeof(DateTime));
+            dt.Columns.Add("Address", typeof(string));
+            dt.Columns.Add("PhoneNumber", typeof(string));
+            dt.Columns.Add("IsActive", typeof(bool));
+
+            foreach (var c in clients)
+            {
+                dt.Rows.Add(c.firstName, c.secondName, c.lastName, c.email, c.dob, c.address, c.phone, c.isActive);
+            }
+
+            using var bulk = new SqlBulkCopy(_connectionString)
+            {
+                DestinationTableName = "Clients"
+            };
+
+            bulk.ColumnMappings.Add("FirstName", "FirstName");
+            bulk.ColumnMappings.Add("SecondName", "SecondName");
+            bulk.ColumnMappings.Add("LastName", "LastName");
+            bulk.ColumnMappings.Add("Email", "Email");
+            bulk.ColumnMappings.Add("DateOfBirth", "DateOfBirth");
+            bulk.ColumnMappings.Add("Address", "Address");
+            bulk.ColumnMappings.Add("PhoneNumber", "PhoneNumber");
+            bulk.ColumnMappings.Add("IsActive", "IsActive");
+
+            await bulk.WriteToServerAsync(dt);
+        }
+
+        public async Task CreateRoomsBatchAsync(List<(int number, int capacity, int pricePerNight, bool isActive)> rooms)
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("Number", typeof(int));
+            dt.Columns.Add("Capacity", typeof(int));
+            dt.Columns.Add("PricePerNight", typeof(int));
+            dt.Columns.Add("IsActive", typeof(bool));
+
+            foreach (var r in rooms)
+            {
+                dt.Rows.Add(
+                    r.number,
+                    r.capacity,
+                    r.pricePerNight,
+                    r.isActive ? true : false
+                );
+            }
+
+            using var bulk = new SqlBulkCopy(_connectionString)
+            {
+                DestinationTableName = "Rooms"
+            };
+
+            bulk.ColumnMappings.Add("Number", "Number");
+            bulk.ColumnMappings.Add("Capacity", "Capacity");
+            bulk.ColumnMappings.Add("PricePerNight", "PricePerNight");
+            bulk.ColumnMappings.Add("IsActive", "IsActive");
+
+            await bulk.WriteToServerAsync(dt);
+        }
+
+        public async Task CreateServicesBatchAsync(List<(string name, int price, bool isActive)> services)
+        {
+            if (services == null || services.Count == 0) return;
+
+            var dt = new DataTable();
+            dt.Columns.Add("Name", typeof(string));
+            dt.Columns.Add("Price", typeof(int));
+            dt.Columns.Add("IsActive", typeof(bool));
+
+            foreach (var s in services)
+            {
+                dt.Rows.Add(s.name ?? string.Empty, s.price, s.isActive ? true : false);
+            }
+
+            using var bulk = new SqlBulkCopy(_connectionString)
+            {
+                DestinationTableName = "Services"
+            };
+
+            bulk.ColumnMappings.Add("Name", "Name");
+            bulk.ColumnMappings.Add("Price", "Price");
+            bulk.ColumnMappings.Add("IsActive", "IsActive");
+
+            await bulk.WriteToServerAsync(dt);
+        }
+
+        public async Task CreateReservationsBatchAsync(List<(int clientId, int roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)> reservations)
+        {
+            if (reservations == null || reservations.Count == 0) return;
+
+            var dt = new DataTable();
+            dt.Columns.Add("ClientId", typeof(int));
+            dt.Columns.Add("RoomId", typeof(int));
+            dt.Columns.Add("CheckInDate", typeof(DateTime));
+            dt.Columns.Add("CheckOutDate", typeof(DateTime));
+            dt.Columns.Add("CreationDate", typeof(DateTime));
+
+            foreach (var r in reservations)
+                dt.Rows.Add(r.clientId, r.roomId, r.checkIn, r.checkOut, r.creationDate);
+
+            using var bulk = new SqlBulkCopy(_connectionString)
+            {
+                DestinationTableName = "Reservations",
+                EnableStreaming = true
+            };
+
+            bulk.ColumnMappings.Add("ClientId", "ClientId");
+            bulk.ColumnMappings.Add("RoomId", "RoomId");
+            bulk.ColumnMappings.Add("CheckInDate", "CheckInDate");
+            bulk.ColumnMappings.Add("CheckOutDate", "CheckOutDate");
+            bulk.ColumnMappings.Add("CreationDate", "CreationDate");
+
+            await bulk.WriteToServerAsync(dt);
+        }
+
+        public async Task CreatePaymentsBatchAsync(List<(int reservationId, string description, int sum, DateTime creationDate)> payments)
+        {
+            if (payments == null || payments.Count == 0) return;
+
+            var dt = new DataTable();
+            dt.Columns.Add("ReservationId", typeof(int));
+            dt.Columns.Add("Description", typeof(string));
+            dt.Columns.Add("Sum", typeof(int));
+            dt.Columns.Add("CreationDate", typeof(DateTime));
+
+            foreach (var p in payments)
+                dt.Rows.Add(p.reservationId, p.description ?? string.Empty, p.sum, p.creationDate);
+
+            using var bulk = new SqlBulkCopy(_connectionString)
+            {
+                DestinationTableName = "Payments",
+                EnableStreaming = true
+            };
+
+            bulk.ColumnMappings.Add("ReservationId", "ReservationId");
+            bulk.ColumnMappings.Add("Description", "Description");
+            bulk.ColumnMappings.Add("Sum", "Sum");
+            bulk.ColumnMappings.Add("CreationDate", "CreationDate");
+
+            await bulk.WriteToServerAsync(dt);
+        }
+
+        public async Task CreateReservationsServicesBatchAsync(List<(int reservationId, int serviceId, DateTime creationDate)> resServices)
+        {
+            if (resServices == null || resServices.Count == 0) return;
+
+            var dt = new DataTable();
+            dt.Columns.Add("ReservationId", typeof(int));
+            dt.Columns.Add("ServiceId", typeof(int));
+            dt.Columns.Add("CreationDate", typeof(DateTime));
+
+            foreach (var rs in resServices)
+                dt.Rows.Add(rs.reservationId, rs.serviceId, rs.creationDate);
+
+            using var bulk = new SqlBulkCopy(_connectionString)
+            {
+                DestinationTableName = "ReservationsServices",
+                EnableStreaming = true
+            };
+
+            bulk.ColumnMappings.Add("ReservationId", "ReservationId");
+            bulk.ColumnMappings.Add("ServiceId", "ServiceId");
+            bulk.ColumnMappings.Add("CreationDate", "CreationDate");
+
+            await bulk.WriteToServerAsync(dt);
+        }
+
+        public async Task<List<int>> GetAllClientIdsAsync()
+        {
+            var ids = new List<int>();
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand("SELECT Id FROM Clients", connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                ids.Add(reader.GetInt32(0));
+            }
+            return ids;
+        }
+
+        public async Task<List<int>> GetAllRoomIdsAsync()
+        {
+            var ids = new List<int>();
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand("SELECT Id FROM Rooms", connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                ids.Add(reader.GetInt32(0));
+            }
+            return ids;
+        }
+
+        public async Task<List<int>> GetAllServiceIdsAsync()
+        {
+            var ids = new List<int>();
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand("SELECT Id FROM Services", connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                ids.Add(reader.GetInt32(0));
+            }
+            return ids;
+        }
+
+        public async Task<List<int>> GetAllReservationIdsAsync()
+        {
+            var result = new List<int>();
+            var sql = "SELECT Id FROM Reservations";
+
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand(sql, connection);
+            using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                result.Add(reader.GetInt32(0));
+            }
+
+            return result;
+        }
     }
 }

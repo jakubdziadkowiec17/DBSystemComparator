@@ -41,7 +41,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
         {
             var client = new ClientCollection
             {
-                Name = firstName,
+                FirstName = firstName,
                 SecondName = secondName,
                 LastName = lastName,
                 Email = email,
@@ -444,5 +444,128 @@ namespace DBSystemComparator_API.Repositories.Implementations
         public Task DeleteAllPaymentsAsync() => _mongoDbContext.Payments.DeleteManyAsync(FilterDefinition<PaymentCollection>.Empty);
         public Task DeleteAllServicesAsync() => _mongoDbContext.Services.DeleteManyAsync(FilterDefinition<Models.Collections.ServiceCollection>.Empty);
 
+        public async Task CreateClientsBatchAsync(IEnumerable<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)> clients)
+        {
+            var documents = clients.Select(c => new ClientCollection
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                FirstName = c.firstName,
+                SecondName = c.secondName,
+                LastName = c.lastName,
+                Email = c.email,
+                DateOfBirth = c.dob,
+                Address = c.address,
+                PhoneNumber = c.phone,
+                IsActive = c.isActive
+            }).ToList();
+
+            if (documents.Count > 0)
+                await _mongoDbContext.Clients.InsertManyAsync(documents);
+        }
+
+        public async Task CreateRoomsBatchAsync(IEnumerable<(int number, int capacity, int pricePerNight, bool isActive)> rooms)
+        {
+            var documents = rooms.Select(r => new RoomCollection
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                Number = r.number,
+                Capacity = r.capacity,
+                PricePerNight = r.pricePerNight,
+                IsActive = r.isActive
+            }).ToList();
+
+            if (documents.Count > 0)
+                await _mongoDbContext.Rooms.InsertManyAsync(documents);
+        }
+
+        public async Task CreateServicesBatchAsync(IEnumerable<(string name, int price, bool isActive)> services)
+        {
+            var documents = services.Select(s => new Models.Collections.ServiceCollection
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                Name = s.name,
+                Price = s.price,
+                IsActive = s.isActive
+            }).ToList();
+
+            if (documents.Count > 0)
+                await _mongoDbContext.Services.InsertManyAsync(documents);
+        }
+
+        public async Task CreateReservationsBatchAsync(IEnumerable<(string clientId, string roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)> reservations)
+        {
+            var documents = reservations.Select(r => new ReservationCollection
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                ClientId = r.clientId,
+                RoomId = r.roomId,
+                CheckInDate = r.checkIn,
+                CheckOutDate = r.checkOut,
+                CreationDate = r.creationDate
+            }).ToList();
+
+            if (documents.Count > 0)
+                await _mongoDbContext.Reservations.InsertManyAsync(documents);
+        }
+
+        public async Task CreatePaymentsBatchAsync(IEnumerable<(string reservationId, string description, int sum, DateTime creationDate)> payments)
+        {
+            var documents = payments.Select(p => new PaymentCollection
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                ReservationId = p.reservationId,
+                Description = p.description,
+                Sum = p.sum,
+                CreationDate = p.creationDate
+            }).ToList();
+
+            if (documents.Count > 0)
+                await _mongoDbContext.Payments.InsertManyAsync(documents);
+        }
+
+        public async Task CreateReservationsServicesBatchAsync(IEnumerable<(string reservationId, string serviceId, DateTime creationDate)> resServices)
+        {
+            var documents = resServices.Select(rs => new ReservationServiceCollection
+            {
+                ReservationId = rs.reservationId,
+                ServiceId = rs.serviceId,
+                CreationDate = rs.creationDate
+            }).ToList();
+
+            if (documents.Count > 0)
+                await _mongoDbContext.ReservationsServices.InsertManyAsync(documents);
+        }
+
+        public async Task<List<string>> GetAllClientIdsAsync()
+        {
+            return await _mongoDbContext.Clients
+                .Find(FilterDefinition<ClientCollection>.Empty)
+                .Project(c => c.Id)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllRoomIdsAsync()
+        {
+            return await _mongoDbContext.Rooms
+                .Find(FilterDefinition<RoomCollection>.Empty)
+                .Project(r => r.Id)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllServiceIdsAsync()
+        {
+            return await _mongoDbContext.Services
+                .Find(FilterDefinition<Models.Collections.ServiceCollection>.Empty)
+                .Project(s => s.Id)
+                .ToListAsync();
+        }
+
+        public async Task<List<string>> GetAllReservationIdsAsync()
+        {
+            return await _mongoDbContext.Reservations
+                .Find(FilterDefinition<ReservationCollection>.Empty)
+                .Project(r => r.Id)
+                .ToListAsync();
+        }
     }
 }

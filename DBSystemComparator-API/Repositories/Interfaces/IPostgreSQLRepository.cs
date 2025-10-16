@@ -36,5 +36,17 @@ namespace DBSystemComparator_API.Repositories.Interfaces
         Task<int> DeleteAllReservationsServicesAsync();
         Task<int> DeleteAllPaymentsAsync();
         Task<int> DeleteAllServicesAsync();
+
+        Task CreateClientsBatchAsync(IEnumerable<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)> clients);
+        Task CreateRoomsBatchAsync(IEnumerable<(int number, int capacity, int pricePerNight, bool isActive)> rooms);
+        Task CreateServicesBatchAsync(IEnumerable<(string name, int price, bool isActive)> services);
+        Task CreateReservationsBatchAsync(IEnumerable<(int clientId, int roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)> reservations);
+        Task CreatePaymentsBatchAsync(IEnumerable<(int reservationId, string description, int sum, DateTime creationDate)> payments);
+        Task CreateReservationsServicesBatchAsync(IEnumerable<(int reservationId, int serviceId, DateTime creationDate)> resServices);
+
+        Task<List<int>> GetAllClientIdsAsync();
+        Task<List<int>> GetAllRoomIdsAsync();
+        Task<List<int>> GetAllServiceIdsAsync();
+        Task<List<int>> GetAllReservationIdsAsync();
     }
 }

@@ -9,7 +9,7 @@ namespace DBSystemComparator_API.Models.Collections
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; }
         [BsonElement("FirstName")]
-        public string Name { get; set; }
+        public string FirstName { get; set; }
         [BsonElement("SecondName")]
         public string SecondName { get; set; }
         [BsonElement("LastName")]
