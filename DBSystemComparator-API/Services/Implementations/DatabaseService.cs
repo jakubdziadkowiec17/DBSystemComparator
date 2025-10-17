@@ -24,14 +24,14 @@ namespace DBSystemComparator_API.Services.Implementations
             var tablesCountForPostgreSQL = await _postgreSQLRepository.GetTablesCountAsync();
             var tablesCountForSQLServer = await _sqlServerRepository.GetTablesCountAsync();
             var tablesCountForMongoDB = await _mongoDBRepository.GetTablesCountAsync();
-            var tablesCountForCassandra = await _cassandraRepository.GetTablesCountAsync();
+            //var tablesCountForCassandra = await _cassandraRepository.GetTablesCountAsync();
 
             return new DataCountDTO()
             {
                 PostgreSQL = tablesCountForPostgreSQL,
                 SQLServer = tablesCountForSQLServer,
                 MongoDB = tablesCountForMongoDB,
-                Cassandra = tablesCountForCassandra
+                Cassandra = tablesCountForMongoDB,//////////////////
             };
         }
 
@@ -54,19 +54,19 @@ namespace DBSystemComparator_API.Services.Implementations
             await _postgreSQLRepository.DeleteAllReservationsServicesAsync();
             await _postgreSQLRepository.DeleteAllPaymentsAsync();
 
-            await _mongoDBRepository.DeleteAllClientsAsync();
-            await _mongoDBRepository.DeleteAllRoomsAsync();
-            await _mongoDBRepository.DeleteAllServicesAsync();
-            await _mongoDBRepository.DeleteAllReservationsAsync();
-            await _mongoDBRepository.DeleteAllReservationsServicesAsync();
-            await _mongoDBRepository.DeleteAllPaymentsAsync();
+            //await _mongoDBRepository.DeleteAllClientsAsync();
+            //await _mongoDBRepository.DeleteAllRoomsAsync();
+            //await _mongoDBRepository.DeleteAllServicesAsync();
+            //await _mongoDBRepository.DeleteAllReservationsAsync();
+            //await _mongoDBRepository.DeleteAllReservationsServicesAsync();
+            //await _mongoDBRepository.DeleteAllPaymentsAsync();
 
-            await _cassandraRepository.DeleteAllClientsAsync();
-            await _cassandraRepository.DeleteAllRoomsAsync();
-            await _cassandraRepository.DeleteAllServicesAsync();
-            await _cassandraRepository.DeleteAllReservationsAsync();
-            await _cassandraRepository.DeleteAllReservationsServicesAsync();
-            await _cassandraRepository.DeleteAllPaymentsAsync();
+            //await _cassandraRepository.DeleteAllClientsAsync();
+            //await _cassandraRepository.DeleteAllRoomsAsync();
+            //await _cassandraRepository.DeleteAllServicesAsync();
+            //await _cassandraRepository.DeleteAllReservationsAsync();
+            //await _cassandraRepository.DeleteAllReservationsServicesAsync();
+            //await _cassandraRepository.DeleteAllPaymentsAsync();
 
             var allClientIdsSQL = new List<int>();
             var allRoomIdsSQL = new List<int>();
@@ -110,15 +110,15 @@ namespace DBSystemComparator_API.Services.Implementations
 
                     _postgreSQLRepository.CreateClientsBatchAsync(clientsBatch),
                     _postgreSQLRepository.CreateRoomsBatchAsync(roomsBatch),
-                    _postgreSQLRepository.CreateServicesBatchAsync(servicesBatch),
+                    _postgreSQLRepository.CreateServicesBatchAsync(servicesBatch)
 
-                    _mongoDBRepository.CreateClientsBatchAsync(clientsBatch),
-                    _mongoDBRepository.CreateRoomsBatchAsync(roomsBatch),
-                    _mongoDBRepository.CreateServicesBatchAsync(servicesBatch),
+                    //_mongoDBRepository.CreateClientsBatchAsync(clientsBatch),
+                    //_mongoDBRepository.CreateRoomsBatchAsync(roomsBatch),
+                    //_mongoDBRepository.CreateServicesBatchAsync(servicesBatch),
 
-                    _cassandraRepository.CreateClientsBatchAsync(clientsBatch),
-                    _cassandraRepository.CreateRoomsBatchAsync(roomsBatch),
-                    _cassandraRepository.CreateServicesBatchAsync(servicesBatch)
+                    //_cassandraRepository.CreateClientsBatchAsync(clientsBatch),
+                    //_cassandraRepository.CreateRoomsBatchAsync(roomsBatch),
+                    //_cassandraRepository.CreateServicesBatchAsync(servicesBatch)
                 );
 
                 allClientIdsSQL = await _sqlServerRepository.GetAllClientIdsAsync();
@@ -129,13 +129,13 @@ namespace DBSystemComparator_API.Services.Implementations
                 allRoomIdsPG = await _postgreSQLRepository.GetAllRoomIdsAsync();
                 allServiceIdsPG = await _postgreSQLRepository.GetAllServiceIdsAsync();
 
-                allClientIdsMongo = await _mongoDBRepository.GetAllClientIdsAsync();
-                allRoomIdsMongo = await _mongoDBRepository.GetAllRoomIdsAsync();
-                allServiceIdsMongo = await _mongoDBRepository.GetAllServiceIdsAsync();
+                //allClientIdsMongo = await _mongoDBRepository.GetAllClientIdsAsync();
+                //allRoomIdsMongo = await _mongoDBRepository.GetAllRoomIdsAsync();
+                //allServiceIdsMongo = await _mongoDBRepository.GetAllServiceIdsAsync();
 
-                allClientIdsCassandra = await _cassandraRepository.GetAllClientIdsAsync();
-                allRoomIdsCassandra = await _cassandraRepository.GetAllRoomIdsAsync();
-                allServiceIdsCassandra = await _cassandraRepository.GetAllServiceIdsAsync();
+                //allClientIdsCassandra = await _cassandraRepository.GetAllClientIdsAsync();
+                //allRoomIdsCassandra = await _cassandraRepository.GetAllRoomIdsAsync();
+                //allServiceIdsCassandra = await _cassandraRepository.GetAllServiceIdsAsync();
             }
 
             for (int batchStart = 0; batchStart < generateDataDTO.Count; batchStart += batchSize)
@@ -155,21 +155,21 @@ namespace DBSystemComparator_API.Services.Implementations
 
                     reservationsSQL.Add((allClientIdsSQL[i], allRoomIdsSQL[i], checkIn, checkOut, now));
                     reservationsPG.Add((allClientIdsPG[i], allRoomIdsPG[i], checkIn, checkOut, now));
-                    reservationsMongo.Add((allClientIdsMongo[i], allRoomIdsMongo[i], checkIn, checkOut, now));
-                    reservationsCassandra.Add((allClientIdsCassandra[i], allRoomIdsCassandra[i], checkIn, checkOut, now));
+                    //reservationsMongo.Add((allClientIdsMongo[i], allRoomIdsMongo[i], checkIn, checkOut, now));
+                    //reservationsCassandra.Add((allClientIdsCassandra[i], allRoomIdsCassandra[i], checkIn, checkOut, now));
                 }
 
                 await Task.WhenAll(
                     _sqlServerRepository.CreateReservationsBatchAsync(reservationsSQL),
-                    _postgreSQLRepository.CreateReservationsBatchAsync(reservationsPG),
-                    _mongoDBRepository.CreateReservationsBatchAsync(reservationsMongo),
-                    _cassandraRepository.CreateReservationsBatchAsync(reservationsCassandra)
+                    _postgreSQLRepository.CreateReservationsBatchAsync(reservationsPG)
+                    //_mongoDBRepository.CreateReservationsBatchAsync(reservationsMongo),
+                   // _cassandraRepository.CreateReservationsBatchAsync(reservationsCassandra)
                 );
 
                 allReservationIdsSQL = await _sqlServerRepository.GetAllReservationIdsAsync();
                 allReservationIdsPG = await _postgreSQLRepository.GetAllReservationIdsAsync();
-                allReservationIdsMongo = await _mongoDBRepository.GetAllReservationIdsAsync();
-                allReservationIdsCassandra = await _cassandraRepository.GetAllReservationIdsAsync();
+                //allReservationIdsMongo = await _mongoDBRepository.GetAllReservationIdsAsync();
+                //allReservationIdsCassandra = await _cassandraRepository.GetAllReservationIdsAsync();
             }
 
             for (int batchStart = 0; batchStart < generateDataDTO.Count; batchStart += batchSize)
@@ -189,33 +189,33 @@ namespace DBSystemComparator_API.Services.Implementations
                     Guid serviceIdCassandra;
                     var now = DateTime.Now;
 
-                    if (allServiceIdsSQL.Count == allServiceIdsPG.Count && allServiceIdsPG.Count == allServiceIdsMongo.Count && allServiceIdsMongo.Count == allServiceIdsCassandra.Count)
+                    if (allServiceIdsSQL.Count == allServiceIdsPG.Count) //&& allServiceIdsPG.Count == allServiceIdsMongo.Count && allServiceIdsMongo.Count == allServiceIdsCassandra.Count)
                     {
                         int idx = random.Next(allServiceIdsSQL.Count);
                         serviceIdSQL = allServiceIdsSQL[idx];
                         serviceIdPG = allServiceIdsPG[idx];
-                        serviceIdMongo = allServiceIdsMongo[idx];
-                        serviceIdCassandra = allServiceIdsCassandra[idx];
+                        //serviceIdMongo = allServiceIdsMongo[idx];
+                        //serviceIdCassandra = allServiceIdsCassandra[idx];
                     }
                     else
                     {
                         serviceIdSQL = allServiceIdsSQL[random.Next(allServiceIdsSQL.Count)];
                         serviceIdPG = allServiceIdsPG[random.Next(allServiceIdsPG.Count)];
-                        serviceIdMongo = allServiceIdsMongo[random.Next(allServiceIdsMongo.Count)];
-                        serviceIdCassandra = allServiceIdsCassandra[random.Next(allServiceIdsCassandra.Count)];
+                        //serviceIdMongo = allServiceIdsMongo[random.Next(allServiceIdsMongo.Count)];
+                        //serviceIdCassandra = allServiceIdsCassandra[random.Next(allServiceIdsCassandra.Count)];
                     }
 
                     resServicesSQL.Add((allReservationIdsSQL[i], serviceIdSQL, now));
                     resServicesPG.Add((allReservationIdsPG[i], serviceIdPG, now));
-                    resServicesMongo.Add((allReservationIdsMongo[i], serviceIdMongo, now));
-                    resServicesCassandra.Add((allReservationIdsCassandra[i], serviceIdCassandra, now));
+                    //resServicesMongo.Add((allReservationIdsMongo[i], serviceIdMongo, now));
+                    //resServicesCassandra.Add((allReservationIdsCassandra[i], serviceIdCassandra, now));
                 }
 
                 await Task.WhenAll(
                     _sqlServerRepository.CreateReservationsServicesBatchAsync(resServicesSQL),
-                    _postgreSQLRepository.CreateReservationsServicesBatchAsync(resServicesPG),
-                    _mongoDBRepository.CreateReservationsServicesBatchAsync(resServicesMongo),
-                    _cassandraRepository.CreateReservationsServicesBatchAsync(resServicesCassandra)
+                    _postgreSQLRepository.CreateReservationsServicesBatchAsync(resServicesPG)
+                    //_mongoDBRepository.CreateReservationsServicesBatchAsync(resServicesMongo),
+                    //_cassandraRepository.CreateReservationsServicesBatchAsync(resServicesCassandra)
                 );
             }
 
@@ -235,15 +235,15 @@ namespace DBSystemComparator_API.Services.Implementations
 
                     paymentsSQL.Add((allReservationIdsSQL[i], $"Payment {i}", sum, now));
                     paymentsPG.Add((allReservationIdsPG[i], $"Payment {i}", sum, now));
-                    paymentsMongo.Add((allReservationIdsMongo[i], $"Payment {i}", sum, now));
-                    paymentsCassandra.Add((allReservationIdsCassandra[i], $"Payment {i}", sum, now));
+                    //paymentsMongo.Add((allReservationIdsMongo[i], $"Payment {i}", sum, now));
+                    //paymentsCassandra.Add((allReservationIdsCassandra[i], $"Payment {i}", sum, now));
                 }
 
                 await Task.WhenAll(
                     _sqlServerRepository.CreatePaymentsBatchAsync(paymentsSQL),
-                    _postgreSQLRepository.CreatePaymentsBatchAsync(paymentsPG),
-                    _mongoDBRepository.CreatePaymentsBatchAsync(paymentsMongo),
-                    _cassandraRepository.CreatePaymentsBatchAsync(paymentsCassandra)
+                    _postgreSQLRepository.CreatePaymentsBatchAsync(paymentsPG)
+                    //_mongoDBRepository.CreatePaymentsBatchAsync(paymentsMongo),
+                    //_cassandraRepository.CreatePaymentsBatchAsync(paymentsCassandra)
                 );
             }
 

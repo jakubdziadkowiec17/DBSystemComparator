@@ -14,93 +14,8 @@ namespace DBSystemComparator_API.Repositories.Implementations
             _connectionString = connectionString;
         }
 
-        public async Task<TablesCountDTO> GetTablesCountAsync()
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-
-            async Task<int> GetCountAsync(string tableName)
-            {
-                var cmdText = $"SELECT COUNT(*) FROM {tableName}";
-                using var cmd = new SqlCommand(cmdText, connection);
-                return (int)await cmd.ExecuteScalarAsync();
-            }
-
-            var clientsCount = await GetCountAsync("clients");
-            var roomsCount = await GetCountAsync("rooms");
-            var reservationsCount = await GetCountAsync("reservations");
-            var paymentsCount = await GetCountAsync("payments");
-            var servicesCount = await GetCountAsync("services");
-            var reservationsServicesCount = await GetCountAsync("reservationsservices");
-
-            return new TablesCountDTO()
-            {
-                ClientsCount = clientsCount,
-                RoomsCount = roomsCount,
-                ReservationsCount = reservationsCount,
-                PaymentsCount = paymentsCount,
-                ServicesCount = servicesCount,
-                ReservationsServicesCount = reservationsServicesCount
-            };
-        }
-
-        private async Task<int> ExecuteNonQueryAsync(string sql, Dictionary<string, object>? parameters = null)
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-            using var cmd = new SqlCommand(sql, connection);
-
-            if (parameters != null)
-            {
-                foreach (var p in parameters)
-                {
-                    cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
-                }
-            }
-
-            return await cmd.ExecuteNonQueryAsync();
-        }
-
-        private async Task<List<Dictionary<string, object>>> ExecuteQueryAsync(string sql, Dictionary<string, object>? parameters = null)
-        {
-            var result = new List<Dictionary<string, object>>();
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-            using var cmd = new SqlCommand(sql, connection);
-
-            if (parameters != null)
-            {
-                foreach (var p in parameters)
-                    cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
-            }
-
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                var row = new Dictionary<string, object>();
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                }
-                result.Add(row);
-            }
-            return result;
-        }
-
-        private async Task<T> ExecuteScalarAsync<T>(string sql, Dictionary<string, object> parameters)
-        {
-            using var connection = new SqlConnection(_connectionString);
-            using var command = new SqlCommand(sql, connection);
-
-            foreach (var p in parameters)
-                command.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
-
-            await connection.OpenAsync();
-            var result = await command.ExecuteScalarAsync();
-            return (T)Convert.ChangeType(result, typeof(T));
-        }
-
         // CREATE
+
         public Task<int> CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
         {
             var sql = @"
@@ -158,207 +73,232 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
-        public Task<int> CreateReservationAsync(int clientId, int roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
+        public async Task<List<int>> CreateClientsAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive, int count)
         {
-            var sql = @"
-                INSERT INTO Reservations (ClientId, RoomId, CheckInDate, CheckOutDate, CreationDate)
-                OUTPUT INSERTED.Id
-                VALUES (@ClientId, @RoomId, @CheckIn, @CheckOut, @CreationDate)";
+            var tasks = new List<Task<int>>();
 
-            var parameters = new Dictionary<string, object>
+            for (int i = 0; i < count; i++)
             {
-                {"@ClientId", clientId},
-                {"@RoomId", roomId},
-                {"@CheckIn", checkIn},
-                {"@CheckOut", checkOut},
-                {"@CreationDate", creationDate}
-            };
+                tasks.Add(CreateClientAsync(firstName, secondName, lastName, email, dob, address, phone, isActive));
+            }
 
-            return ExecuteScalarAsync<int>(sql, parameters);
+            var results = await Task.WhenAll(tasks);
+            return results.ToList();
         }
 
-        public Task<int> CreateReservationServiceAsync(int reservationId, int serviceId, DateTime creationDate)
+        public async Task<List<int>> CreateRoomsAsync(int number, int capacity, int pricePerNight, bool isActive, int count)
         {
-            var sql = @"
-                INSERT INTO ReservationsServices (ReservationId, ServiceId, CreationDate)
-                VALUES (@ReservationId, @ServiceId, @CreationDate)";
+            var tasks = new List<Task<int>>();
 
-            var parameters = new Dictionary<string, object>
+            for (int i = 0; i < count; i++)
             {
-                {"@ReservationId", reservationId},
-                {"@ServiceId", serviceId},
-                {"@CreationDate", creationDate}
-            };
+                tasks.Add(CreateRoomAsync(number, capacity, pricePerNight, isActive));
+            }
 
-            return ExecuteNonQueryAsync(sql, parameters);
-        }
-
-        public Task<int> CreatePaymentAsync(int reservationId, string description, int sum, DateTime creationDate)
-        {
-            var sql = @"
-                INSERT INTO Payments (ReservationId, Description, Sum, CreationDate)
-                OUTPUT INSERTED.Id
-                VALUES (@ReservationId, @Description, @Sum, @CreationDate)";
-
-            var parameters = new Dictionary<string, object>
-            {
-                {"@ReservationId", reservationId},
-                {"@Description", description},
-                {"@Sum", sum},
-                {"@CreationDate", creationDate}
-            };
-
-            return ExecuteScalarAsync<int>(sql, parameters);
+            var results = await Task.WhenAll(tasks);
+            return results.ToList();
         }
 
         // READ
-        public Task<List<Dictionary<string, object>>> ReadClientsWithRoomsAsync(bool isActive)
-        {
-            var sql = @"SELECT c.Id, c.FirstName, c.LastName, r.Number, r.PricePerNight
-                        FROM Clients c
-                        LEFT JOIN Reservations res ON res.ClientId = c.Id
-                        LEFT JOIN Rooms r ON res.RoomId = r.Id
-                        WHERE c.IsActive = @IsActive AND r.IsActive = @IsActive";
-            var parameters = new Dictionary<string, object> { { "@IsActive", isActive ? 1 : 0 } };
-            return ExecuteQueryAsync(sql, parameters);
-        }
 
-        public Task<List<Dictionary<string, object>>> ReadRoomsWithReservationCountAsync()
+        public Task<List<Dictionary<string, object>>> ReadReservationsAfter2024Async()
         {
-            var sql = @"SELECT r.Id, r.Number, r.Capacity, COUNT(res.Id) AS ReservationCount
-                        FROM Rooms r
-                        LEFT JOIN Reservations res ON res.RoomId = r.Id
-                        GROUP BY r.Id, r.Number, r.Capacity
-                        HAVING COUNT(res.Id) > 0";
-            return ExecuteQueryAsync(sql);
-        }
+            var sql = @"
+                SELECT r.Id AS ReservationId, r.CheckInDate, r.CheckOutDate, c.FirstName, c.LastName
+                FROM Reservations r
+                JOIN Clients c ON r.ClientId = c.Id
+                WHERE r.CheckInDate > @CheckInThreshold";
 
-        public Task<List<Dictionary<string, object>>> ReadServicesUsageAsync()
-        {
-            var sql = @"SELECT s.Name AS ServiceName, s.Price, COUNT(rs.ReservationId) AS UsageCount
-                        FROM Services s
-                        LEFT JOIN ReservationsServices rs ON s.Id = rs.ServiceId
-                        GROUP BY s.Name, s.Price
-                        ORDER BY UsageCount DESC";
-            return ExecuteQueryAsync(sql);
-        }
-
-        public Task<List<Dictionary<string, object>>> ReadPaymentsAboveAsync(int minSum)
-        {
-            var sql = @"SELECT p.Id, p.Sum, p.CreationDate, c.FirstName AS ClientName, r.Number AS RoomNumber
-                        FROM Payments p
-                        LEFT JOIN Reservations res ON res.Id = p.ReservationId
-                        LEFT JOIN Clients c ON res.ClientId = c.Id
-                        LEFT JOIN Rooms r ON res.RoomId = r.Id
-                        WHERE p.Sum > @MinSum";
-            var parameters = new Dictionary<string, object> { { "@MinSum", minSum } };
-            return ExecuteQueryAsync(sql, parameters);
-        }
-
-        public Task<List<Dictionary<string, object>>> ReadReservationsWithServicesAsync(bool clientActive, bool serviceActive)
-        {
-            var sql = @"SELECT res.Id AS ReservationId, c.LastName, s.Name AS ServiceName, s.Price, res.CheckInDate, res.CheckOutDate
-                        FROM Reservations res
-                        LEFT JOIN Clients c ON res.ClientId = c.Id
-                        LEFT JOIN ReservationsServices rs ON rs.ReservationId = res.Id
-                        LEFT JOIN Services s ON rs.ServiceId = s.Id
-                        WHERE c.IsActive = @ClientActive AND s.IsActive = @ServiceActive";
             var parameters = new Dictionary<string, object>
             {
-                {"@ClientActive", clientActive ? 1 : 0},
-                {"@ServiceActive", serviceActive ? 1 : 0}
+                { "@CheckInThreshold", new DateTime(2024, 1, 1) }
             };
+
+            return ExecuteQueryAsync(sql, parameters);
+        }
+
+        public Task<List<Dictionary<string, object>>> ReadReservationsWithPaymentsAboveAsync(int minSum)
+        {
+            var sql = @"
+                SELECT r.Id AS ReservationId, r.CheckInDate, r.CheckOutDate, p.Sum, c.FirstName, c.LastName
+                FROM Reservations r
+                JOIN Clients c ON r.ClientId = c.Id
+                JOIN Payments p ON r.Id = p.ReservationId
+                WHERE p.Sum > @MinSum";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@MinSum", minSum }
+            };
+
+            return ExecuteQueryAsync(sql, parameters);
+        }
+
+        public Task<List<Dictionary<string, object>>> ReadClientsWithActiveReservationsAsync()
+        {
+            var sql = @"
+                SELECT DISTINCT c.Id, c.FirstName, c.LastName, c.Email
+                FROM Clients c
+                JOIN Reservations r ON r.ClientId = c.Id
+                WHERE r.CheckOutDate IS NULL OR r.CheckOutDate >= GETDATE()";
+
+            return ExecuteQueryAsync(sql);
+        }
+
+        public Task<List<Dictionary<string, object>>> ReadActiveServicesUsedInReservationsAsync()
+        {
+            var sql = @"
+                SELECT DISTINCT s.Id AS ServiceId, s.Name, s.Price
+                FROM Services s
+                JOIN ReservationsServices rs ON s.Id = rs.ServiceId
+                WHERE s.IsActive = @IsActive";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@IsActive", 1 }
+            };
+
+            return ExecuteQueryAsync(sql, parameters);
+        }
+
+        public Task<List<Dictionary<string, object>>> ReadCapacityReservationsAsync(int capacityThreshold)
+        {
+            var sql = @"
+                SELECT r.Id AS ReservationId, r.CheckInDate, r.CheckOutDate, c.FirstName, c.LastName, rm.Number AS RoomNumber, rm.Capacity
+                FROM Reservations r
+                JOIN Clients c ON r.ClientId = c.Id
+                JOIN Rooms rm ON r.RoomId = rm.Id
+                WHERE rm.Capacity > @CapacityThreshold";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@CapacityThreshold", capacityThreshold }
+            };
+
             return ExecuteQueryAsync(sql, parameters);
         }
 
         // UPDATE
-        public Task<int> UpdateClientsAddressPhoneAsync(bool isActive)
+
+        public Task<int> UpdateClientsAddressAndPhoneAsync(bool isActive)
         {
-            var sql = @"UPDATE Clients SET Address = 'Cracow, ul. abc 4', PhoneNumber = '123456789'
-                        WHERE Id IN (SELECT TOP 200 Id FROM Clients WHERE IsActive = @IsActive)";
-            var parameters = new Dictionary<string, object> { { "@IsActive", isActive ? 1 : 0 } };
+            var sql = @"
+                UPDATE Clients
+                SET Address = 'Cracow, ul. abc 4',
+                    PhoneNumber = '123456789'
+                WHERE Id IN (SELECT Id FROM Clients WHERE IsActive = @IsActive)";
+
+                    var parameters = new Dictionary<string, object>
+                    {
+                        { "@IsActive", isActive ? 1 : 0 }
+                    };
+
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdateRoomsPriceJoinReservationsAsync(int minCapacity)
+        public Task<int> UpdateRoomsPriceForReservationsAsync(int minCapacity, int priceIncrement)
         {
-            var sql = @"UPDATE r SET r.PricePerNight = r.PricePerNight + 150
-                        FROM Rooms r
-                        INNER JOIN Reservations res ON r.Id = res.RoomId
-                        WHERE r.Capacity >= @MinCapacity";
-            var parameters = new Dictionary<string, object> { { "@MinCapacity", minCapacity } };
+            var sql = @"
+                UPDATE Rooms
+                SET PricePerNight = PricePerNight + @PriceIncrement
+                WHERE Capacity >= @MinCapacity
+                  AND Id IN (SELECT RoomId FROM Reservations)";
+            
+            var parameters = new Dictionary<string, object>
+            {
+                { "@MinCapacity", minCapacity },
+                { "@PriceIncrement", priceIncrement }
+            };
+
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdateServicesPriceAsync(bool isActive)
+        public Task<int> UpdateServicesPriceAsync(int priceIncrement, bool isActive)
         {
-            var sql = "UPDATE Services SET Price = Price + 25 WHERE IsActive = @IsActive";
-            var parameters = new Dictionary<string, object> { { "@IsActive", isActive ? 1 : 0 } };
+            var sql = @"
+                UPDATE Services
+                SET Price = Price + @PriceIncrement
+                WHERE IsActive = @IsActive";
+            
+            var parameters = new Dictionary<string, object>
+            {
+                { "@PriceIncrement", priceIncrement },
+                { "@IsActive", isActive ? 1 : 0 }
+            };
+
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdateRoomsPriceInactiveAsync()
+        public Task<int> UpdatePriceForInactiveRoomsAsync(double discountMultiplier)
         {
-            var sql = "UPDATE Rooms SET PricePerNight = PricePerNight * 0.8 WHERE IsActive = @IsActive";
-            var parameters = new Dictionary<string, object> { { "@IsActive", 0 } };
+            var sql = @"
+                UPDATE Rooms
+                SET PricePerNight = PricePerNight * @DiscountMultiplier
+                WHERE IsActive = @IsActive";
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "@DiscountMultiplier", discountMultiplier },
+                { "@IsActive", 0 }
+            };
+
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdateRoomsPriceFutureReservationsAsync()
+        public Task<int> UpdateRoomsPriceForReservationsTo2024Async(int priceDecrement)
         {
-            var sql = "UPDATE Rooms SET PricePerNight = PricePerNight - 15 WHERE Id IN (SELECT RoomId FROM Reservations WHERE CheckInDate > GETDATE())";
-            return ExecuteNonQueryAsync(sql);
+            var sql = @"
+                UPDATE Rooms
+                SET PricePerNight = PricePerNight - @PriceDecrement
+                WHERE Id IN (
+                    SELECT RoomId
+                    FROM Reservations
+                    WHERE CheckInDate < '2024-01-01'
+                )";
+            
+            var parameters = new Dictionary<string, object>
+            {
+                { "@PriceDecrement", priceDecrement }
+            };
+
+            return ExecuteNonQueryAsync(sql, parameters);
         }
 
         // DELETE
-        public Task<int> DeleteReservationsSmallRoomsAsync(int capacityThreshold)
-        {
-            var sql = "DELETE FROM Reservations WHERE RoomId IN (SELECT Id FROM Rooms WHERE Capacity < @CapacityThreshold AND CheckInDate > GETDATE())";
-            var parameters = new Dictionary<string, object> { { "@CapacityThreshold", capacityThreshold } };
-            return ExecuteNonQueryAsync(sql, parameters);
-        }
 
-        public Task<int> DeleteReservationsServicesFutureAsync(int topRows)
+        public Task<int> DeletePaymentsOlderThan2024Async()
         {
-            var sql = "DELETE FROM ReservationsServices WHERE ReservationId IN (SELECT TOP (@TopRows) Id FROM Reservations WHERE CheckInDate > GETDATE())";
-            var parameters = new Dictionary<string, object> { { "@TopRows", topRows } };
-            return ExecuteNonQueryAsync(sql, parameters);
-        }
-
-        public Task<int> DeleteReservationsWithoutPaymentsAsync()
-        {
-            var sql = "DELETE FROM Reservations WHERE Id NOT IN (SELECT DISTINCT ReservationId FROM Payments)";
+            var sql = @"DELETE FROM Payments WHERE ReservationId IN (SELECT Id FROM Reservations WHERE CheckInDate < '2024-01-01')";
             return ExecuteNonQueryAsync(sql);
         }
 
-        public Task<int> DeleteInactiveClientsWithoutReservationsAsync()
+        public Task<int> DeletePaymentsWithoutReservationAsync()
         {
-            var sql = "DELETE FROM Clients WHERE IsActive = @IsActive AND Id NOT IN (SELECT DISTINCT ClientId FROM Reservations)";
-            var parameters = new Dictionary<string, object> { { "@IsActive", 0 } };
+            var sql = @"DELETE FROM Payments WHERE ReservationId NOT IN (SELECT Id FROM Reservations)";
+            return ExecuteNonQueryAsync(sql);
+        }
+
+        public Task<int> DeleteReservationsServicesOlderThan2024Async()
+        {
+            var sql = @"DELETE FROM ReservationsServices WHERE ReservationId IN (SELECT Id FROM Reservations WHERE CheckInDate < '2024-01-01')";
+            return ExecuteNonQueryAsync(sql);
+        }
+
+        public Task<int> DeleteReservationsServicesWithServicePriceBelowAsync(int price)
+        {
+            var sql = @"DELETE FROM ReservationsServices WHERE ServiceId IN (SELECT Id FROM Services WHERE Price < @price)";
+            var parameters = new Dictionary<string, object> { { "@price", price } };
+
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> DeleteRoomsWithoutReservationsAsync()
+        public Task<int> DeleteUnusedServicesAsync()
         {
-            var sql = "DELETE FROM Rooms WHERE Id NOT IN (SELECT DISTINCT RoomId FROM Reservations) AND IsActive = @IsActive";
-            var parameters = new Dictionary<string, object> { { "@IsActive", 0 } };
-            return ExecuteNonQueryAsync(sql, parameters);
+            var sql = @"DELETE FROM Services WHERE Id NOT IN (SELECT DISTINCT ServiceId FROM ReservationsServices)";
+            return ExecuteNonQueryAsync(sql);
         }
 
-        public Task<int> DeleteAllClientsAsync() => ExecuteNonQueryAsync("DELETE FROM Clients");
-        public Task<int> DeleteAllRoomsAsync() => ExecuteNonQueryAsync("DELETE FROM Rooms");
-        public Task<int> DeleteAllReservationsAsync() => ExecuteNonQueryAsync("DELETE FROM Reservations");
-        public Task<int> DeleteAllReservationsServicesAsync() => ExecuteNonQueryAsync("DELETE FROM ReservationsServices");
-        public Task<int> DeleteAllPaymentsAsync() => ExecuteNonQueryAsync("DELETE FROM Payments");
-        public Task<int> DeleteAllServicesAsync() => ExecuteNonQueryAsync("DELETE FROM Services");
-
-        private async Task<int> ExecuteNonQueryAsync(string sql)
-        {
-            using var connection = new SqlConnection(_connectionString);
-            await connection.OpenAsync();
-            using var cmd = new SqlCommand(sql, connection);
-            return await cmd.ExecuteNonQueryAsync();
-        }
+        // HELPERS
 
         public async Task CreateClientsBatchAsync(IEnumerable<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)> clients)
         {
@@ -532,6 +472,36 @@ namespace DBSystemComparator_API.Repositories.Implementations
             await bulk.WriteToServerAsync(dt);
         }
 
+        public async Task<TablesCountDTO> GetTablesCountAsync()
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            async Task<int> GetCountAsync(string tableName)
+            {
+                var cmdText = $"SELECT COUNT(*) FROM {tableName}";
+                using var cmd = new SqlCommand(cmdText, connection);
+                return (int)await cmd.ExecuteScalarAsync();
+            }
+
+            var clientsCount = await GetCountAsync("clients");
+            var roomsCount = await GetCountAsync("rooms");
+            var reservationsCount = await GetCountAsync("reservations");
+            var paymentsCount = await GetCountAsync("payments");
+            var servicesCount = await GetCountAsync("services");
+            var reservationsServicesCount = await GetCountAsync("reservationsservices");
+
+            return new TablesCountDTO()
+            {
+                ClientsCount = clientsCount,
+                RoomsCount = roomsCount,
+                ReservationsCount = reservationsCount,
+                PaymentsCount = paymentsCount,
+                ServicesCount = servicesCount,
+                ReservationsServicesCount = reservationsServicesCount
+            };
+        }
+
         public async Task<List<int>> GetAllClientIdsAsync()
         {
             var ids = new List<int>();
@@ -590,6 +560,82 @@ namespace DBSystemComparator_API.Repositories.Implementations
             }
 
             return result;
+        }
+
+        public Task<int> DeleteAllClientsAsync() => ExecuteNonQueryAsync("DELETE FROM Clients");
+
+        public Task<int> DeleteAllRoomsAsync() => ExecuteNonQueryAsync("DELETE FROM Rooms");
+
+        public Task<int> DeleteAllReservationsAsync() => ExecuteNonQueryAsync("DELETE FROM Reservations");
+
+        public Task<int> DeleteAllReservationsServicesAsync() => ExecuteNonQueryAsync("DELETE FROM ReservationsServices");
+
+        public Task<int> DeleteAllPaymentsAsync() => ExecuteNonQueryAsync("DELETE FROM Payments");
+
+        public Task<int> DeleteAllServicesAsync() => ExecuteNonQueryAsync("DELETE FROM Services");
+
+        private async Task<int> ExecuteNonQueryAsync(string sql, Dictionary<string, object>? parameters = null)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand(sql, connection);
+
+            if (parameters != null)
+            {
+                foreach (var p in parameters)
+                {
+                    cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+                }
+            }
+
+            return await cmd.ExecuteNonQueryAsync();
+        }
+
+        private async Task<int> ExecuteNonQueryAsync(string sql)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand(sql, connection);
+            return await cmd.ExecuteNonQueryAsync();
+        }
+
+        private async Task<List<Dictionary<string, object>>> ExecuteQueryAsync(string sql, Dictionary<string, object>? parameters = null)
+        {
+            var result = new List<Dictionary<string, object>>();
+            using var connection = new SqlConnection(_connectionString);
+            await connection.OpenAsync();
+            using var cmd = new SqlCommand(sql, connection);
+
+            if (parameters != null)
+            {
+                foreach (var p in parameters)
+                    cmd.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+            }
+
+            using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                var row = new Dictionary<string, object>();
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    row[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader.GetValue(i);
+                }
+                result.Add(row);
+            }
+            return result;
+        }
+
+        private async Task<T> ExecuteScalarAsync<T>(string sql, Dictionary<string, object> parameters)
+        {
+            using var connection = new SqlConnection(_connectionString);
+            using var command = new SqlCommand(sql, connection);
+
+            foreach (var p in parameters)
+                command.Parameters.AddWithValue(p.Key, p.Value ?? DBNull.Value);
+
+            await connection.OpenAsync();
+            var result = await command.ExecuteScalarAsync();
+            return (T)Convert.ChangeType(result, typeof(T));
         }
     }
 }
