@@ -90,6 +90,15 @@
                         <span>Selected scenario:</span>
                         <span class="sm:text-right break-all"><b>{{selectedScenario?.description}}</b></span>
                       </div>
+                      <div class="flex flex-col sm:flex-row justify-between gap-1">
+                        <span>Operation:</span>
+                        <span class="sm:text-right break-all">
+                          <b *ngIf="selectedScenario?.operationId === Operation.CREATE">CREATE</b>
+                          <b *ngIf="selectedScenario?.operationId === Operation.READ">READ</b>
+                          <b *ngIf="selectedScenario?.operationId === Operation.UPDATE">UPDATE</b>
+                          <b *ngIf="selectedScenario?.operationId === Operation.DELETE">DELETE</b>
+                        </span>
+                      </div>
                   </div>
 
                   <div class="mt-5" *ngIf="timeData.length > 0 || ramUsageData.length > 0 || cpuUsageData.length > 0">

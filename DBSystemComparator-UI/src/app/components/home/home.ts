@@ -38,6 +38,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   scenarios: ScenarioDTO[] = [];
   loadingScenarios = false;
   loadingTest = false;
+  Operation = Operation;
   dbs = [
       { id: DB.POSTGRESQL, name: 'PostgreSQL' },
       { id: DB.SQLSERVER, name: 'SQL Server' },
