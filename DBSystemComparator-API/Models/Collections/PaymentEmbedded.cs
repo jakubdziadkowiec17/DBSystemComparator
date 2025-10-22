@@ -5,8 +5,8 @@ namespace DBSystemComparator_API.Models.Collections
 {
     public class PaymentEmbedded
     {
-        [BsonElement("paymentId")]
-        public ObjectId PaymentId { get; set; }
+        [BsonId]
+        public ObjectId Id { get; set; }
         [BsonElement("description")]
         public string Description { get; set; }
         [BsonElement("sum")]

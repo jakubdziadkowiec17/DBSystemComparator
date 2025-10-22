@@ -18,7 +18,7 @@ namespace DBSystemComparator_API.Models.Collections
         [BsonElement("creationDate")]
         public DateTime CreationDate { get; set; }
         [BsonElement("services")]
-        public List<ServiceEmbedded> Services { get; set; } = new();
+        public List<ServiceCollection> Services { get; set; } = new();
         [BsonElement("payments")]
         public List<PaymentEmbedded> Payments { get; set; } = new();
     }

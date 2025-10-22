@@ -160,26 +160,22 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
         public async Task<List<Dictionary<string, object>>> ReadActiveServicesUsedInReservationsAsync()
         {
-            var activeServices = await _context.Services.Find(s => s.IsActive).ToListAsync();
-            var serviceDict = activeServices.ToDictionary(s => s.Id, s => s);
-
             var reservations = await _context.Reservations.Find(_ => true).ToListAsync();
 
-            var usedServiceIds = reservations
-                .SelectMany(r => r.Services.Select(s => s.ServiceId))
-                .Distinct();
-
-            var result = usedServiceIds
-                .Where(id => serviceDict.ContainsKey(id))
-                .Select(id => new Dictionary<string, object>
+            var services = reservations
+                .SelectMany(r => r.Services)
+                .Where(s => s.IsActive)
+                .GroupBy(s => s.Id)
+                .Select(g => g.First())
+                .Select(s => new Dictionary<string, object>
                 {
-                    ["ServiceId"] = id.ToString(),
-                    ["Name"] = serviceDict[id].Name,
-                    ["Price"] = serviceDict[id].Price
+                    ["Id"] = s.Id.ToString(),
+                    ["Name"] = s.Name,
+                    ["Price"] = s.Price
                 })
                 .ToList();
 
-            return result;
+            return services;
         }
 
         public async Task<List<Dictionary<string, object>>> ReadCapacityReservationsAsync(int capacityThreshold)
@@ -203,55 +199,89 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
         public async Task<long> UpdateClientsAddressAndPhoneAsync(bool isActive)
         {
-            var filter = Builders<ClientCollection>.Filter.Eq(c => c.IsActive, isActive);
-            var update = Builders<ClientCollection>.Update.Set(c => c.Address, "Cracow, ul. abc 4").Set(c => c.PhoneNumber, "123456789");
+            var filterClients = Builders<ClientCollection>.Filter.Eq(c => c.IsActive, isActive);
+            var updateClients = Builders<ClientCollection>.Update
+                .Set(c => c.Address, "Cracow, ul. abc 4")
+                .Set(c => c.PhoneNumber, "123456789");
 
-            var result = await _context.Clients.UpdateManyAsync(filter, update);
-            return result.ModifiedCount;
+            var clientsResult = await _context.Clients.UpdateManyAsync(filterClients, updateClients);
+
+            var filterReservations = Builders<ReservationCollection>.Filter.Eq(r => r.Client.IsActive, isActive);
+            var updateReservations = Builders<ReservationCollection>.Update
+                .Set("client.address", "Cracow, ul. abc 4")
+                .Set("client.phoneNumber", "123456789");
+
+            await _context.Reservations.UpdateManyAsync(filterReservations, updateReservations);
+
+            return clientsResult.ModifiedCount;
         }
 
         public async Task<long> UpdateRoomsPriceForReservationsAsync(int minCapacity, int priceIncrement)
         {
-            var reservationRoomIds = await _context.Reservations.Distinct(r => r.Room.Id, Builders<ReservationCollection>.Filter.Empty).ToListAsync();
+            var filterRooms = Builders<RoomCollection>.Filter.Gte(r => r.Capacity, minCapacity);
+            var updateRooms = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, priceIncrement);
+            var roomsResult = await _context.Rooms.UpdateManyAsync(filterRooms, updateRooms);
 
-            var filter = Builders<RoomCollection>.Filter.And(
-                Builders<RoomCollection>.Filter.Gte(r => r.Capacity, minCapacity),
-                Builders<RoomCollection>.Filter.In(r => r.Id, reservationRoomIds)
-            );
+            var filterReservations = Builders<ReservationCollection>.Filter.Gte(r => r.Room.Capacity, minCapacity);
+            var updateReservations = Builders<ReservationCollection>.Update.Inc("room.pricePerNight", priceIncrement);
 
-            var update = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, priceIncrement);
-            var result = await _context.Rooms.UpdateManyAsync(filter, update);
-            return result.ModifiedCount;
+            await _context.Reservations.UpdateManyAsync(filterReservations, updateReservations);
+
+            return roomsResult.ModifiedCount;
         }
 
         public async Task<long> UpdateServicesPriceAsync(int priceIncrement, bool isActive)
         {
-            var filter = Builders<Models.Collections.ServiceCollection>.Filter.Eq(s => s.IsActive, isActive);
-            var update = Builders<Models.Collections.ServiceCollection>.Update.Inc(s => s.Price, priceIncrement);
+            var filterServices = Builders<Models.Collections.ServiceCollection>.Filter.Eq(s => s.IsActive, isActive);
+            var updateServices = Builders<Models.Collections.ServiceCollection>.Update.Inc(s => s.Price, priceIncrement);
+            var svcResult = await _context.Services.UpdateManyAsync(filterServices, updateServices);
 
-            var result = await _context.Services.UpdateManyAsync(filter, update);
-            return result.ModifiedCount;
+            var filterReservations = Builders<ReservationCollection>.Filter.ElemMatch(r => r.Services, s => s.IsActive == isActive);
+            var updateReservations = Builders<ReservationCollection>.Update
+                .Inc("services.$[s].price", priceIncrement);
+
+            var options = new UpdateOptions
+            {
+                ArrayFilters = new List<ArrayFilterDefinition>
+                {
+                    new BsonDocumentArrayFilterDefinition<BsonDocument>(new BsonDocument("s.isActive", isActive))
+                }
+            };
+
+            await _context.Reservations.UpdateManyAsync(filterReservations, updateReservations, options);
+
+            return svcResult.ModifiedCount;
         }
 
         public async Task<long> UpdatePriceForInactiveRoomsAsync(double discountMultiplier)
         {
-            var filter = Builders<RoomCollection>.Filter.Eq(r => r.IsActive, false);
-            var update = Builders<RoomCollection>.Update.Mul(r => r.PricePerNight, discountMultiplier);
+            var filterRooms = Builders<RoomCollection>.Filter.Eq(r => r.IsActive, false);
+            var updateRooms = Builders<RoomCollection>.Update.Mul(r => r.PricePerNight, discountMultiplier);
+            var roomsResult = await _context.Rooms.UpdateManyAsync(filterRooms, updateRooms);
 
-            var result = await _context.Rooms.UpdateManyAsync(filter, update);
-            return result.ModifiedCount;
+            var filterReservations = Builders<ReservationCollection>.Filter.Eq(r => r.Room.IsActive, false);
+            var updateReservations = Builders<ReservationCollection>.Update.Mul("room.pricePerNight", discountMultiplier);
+
+            await _context.Reservations.UpdateManyAsync(filterReservations, updateReservations);
+
+            return roomsResult.ModifiedCount;
         }
 
         public async Task<long> UpdateRoomsPriceForReservationsTo2024Async(int priceDecrement)
         {
             var filterReservations = Builders<ReservationCollection>.Filter.Lt(r => r.CheckInDate, new DateTime(2024, 1, 1));
-            var reservationRoomIds = await _context.Reservations.Distinct(r => r.Room.Id, filterReservations).ToListAsync();
+            var roomIds = await _context.Reservations.Distinct(r => r.Room.Id, filterReservations).ToListAsync();
 
-            var filterRooms = Builders<RoomCollection>.Filter.In(r => r.Id, reservationRoomIds);
-            var update = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, -priceDecrement);
+            var filterRooms = Builders<RoomCollection>.Filter.In(r => r.Id, roomIds);
+            var updateRooms = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, -priceDecrement);
+            var roomsResult = await _context.Rooms.UpdateManyAsync(filterRooms, updateRooms);
 
-            var result = await _context.Rooms.UpdateManyAsync(filterRooms, update);
-            return result.ModifiedCount;
+            var filterRes2 = Builders<ReservationCollection>.Filter.In(r => r.Room.Id, roomIds);
+            var updateRes2 = Builders<ReservationCollection>.Update.Inc("room.pricePerNight", -priceDecrement);
+
+            await _context.Reservations.UpdateManyAsync(filterRes2, updateRes2);
+
+            return roomsResult.ModifiedCount;
         }
 
         // DELETE
@@ -275,7 +305,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
         public async Task<long> DeleteReservationsServicesOlderThan2024Async()
         {
             var filterReservations = Builders<ReservationCollection>.Filter.Lt(r => r.CheckInDate, new DateTime(2024, 1, 1));
-            var update = Builders<ReservationCollection>.Update.Set(r => r.Services, new List<ServiceEmbedded>());
+            var update = Builders<ReservationCollection>.Update.Set(r => r.Services, new List<Models.Collections.ServiceCollection>());
 
             var result = await _context.Reservations.UpdateManyAsync(filterReservations, update);
             return result.ModifiedCount;
@@ -287,8 +317,8 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
             if (!serviceIds.Any()) return 0;
 
-            var filterReservations = Builders<ReservationCollection>.Filter.ElemMatch(r => r.Services, s => serviceIds.Contains(s.ServiceId));
-            var update = Builders<ReservationCollection>.Update.PullFilter(r => r.Services, s => serviceIds.Contains(s.ServiceId));
+            var filterReservations = Builders<ReservationCollection>.Filter.ElemMatch(r => r.Services, s => serviceIds.Contains(s.Id));
+            var update = Builders<ReservationCollection>.Update.PullFilter(r => r.Services, s => serviceIds.Contains(s.Id));
 
             var result = await _context.Reservations.UpdateManyAsync(filterReservations, update);
             return result.ModifiedCount;
@@ -296,7 +326,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
         public async Task<long> DeleteUnusedServicesAsync()
         {
-            var usedServiceIds = _context.Reservations.AsQueryable().SelectMany(r => r.Services).Select(s => s.ServiceId).Distinct().ToList();
+            var usedServiceIds = _context.Reservations.AsQueryable().SelectMany(r => r.Services).Select(s => s.Id).Distinct().ToList();
 
             var filter = Builders<Models.Collections.ServiceCollection>.Filter.Nin(s => s.Id, usedServiceIds);
             var result = await _context.Services.DeleteManyAsync(filter);
