@@ -5,38 +5,47 @@ namespace DBSystemComparator_API.Database
 {
     public static class MongoDbSeeder
     {
-        public static async Task CreateCollectionsAndIndexesAsync(IMongoDatabase database)
+        public static async Task CreateCollectionsAndIndexesAsync(MongoDbContext context)
         {
-            // Collections
-            var requiredCollections = new[] { "Clients", "Rooms", "Reservations", "Payments", "Services", "ReservationsServices" };
-            var existingCollections = database.ListCollectionNames().ToList();
-
-            foreach (var collection in requiredCollections)
-            {
-                if (!existingCollections.Contains(collection))
-                {
-                    await database.CreateCollectionAsync(collection);
-                }
-            }
-
-            // Indexes
-            var reservations = database.GetCollection<ReservationCollection>("Reservations");
-            await reservations.Indexes.CreateManyAsync(new[]
-            {
-                new CreateIndexModel<ReservationCollection>(Builders<ReservationCollection>.IndexKeys.Ascending(r => r.ClientId)),
-                new CreateIndexModel<ReservationCollection>(Builders<ReservationCollection>.IndexKeys.Ascending(r => r.RoomId))
-            });
-
-            var payments = database.GetCollection<PaymentCollection>("Payments");
-            await payments.Indexes.CreateOneAsync(
-                new CreateIndexModel<PaymentCollection>(Builders<PaymentCollection>.IndexKeys.Ascending(p => p.ReservationId))
+            await context.Clients.Indexes.CreateOneAsync(
+                new CreateIndexModel<ClientCollection>(
+                    Builders<ClientCollection>.IndexKeys.Ascending(c => c.Email)
+                )
+            );
+            await context.Clients.Indexes.CreateOneAsync(
+                new CreateIndexModel<ClientCollection>(
+                    Builders<ClientCollection>.IndexKeys.Ascending(c => c.IsActive)
+                )
             );
 
-            var reservationsServices = database.GetCollection<ReservationServiceCollection>("ReservationsServices");
-            await reservationsServices.Indexes.CreateManyAsync(new[]
+            await context.Rooms.Indexes.CreateOneAsync(
+                new CreateIndexModel<RoomCollection>(
+                    Builders<RoomCollection>.IndexKeys.Ascending(r => r.Capacity)
+                )
+            );
+            await context.Rooms.Indexes.CreateOneAsync(
+                new CreateIndexModel<RoomCollection>(
+                    Builders<RoomCollection>.IndexKeys.Ascending(r => r.IsActive)
+                )
+            );
+
+            await context.Services.Indexes.CreateOneAsync(
+                new CreateIndexModel<Models.Collections.ServiceCollection>(
+                    Builders<Models.Collections.ServiceCollection>.IndexKeys.Ascending(s => s.IsActive)
+                )
+            );
+
+            await context.Reservations.Indexes.CreateManyAsync(new[]
             {
-                new CreateIndexModel<ReservationServiceCollection>(Builders<ReservationServiceCollection>.IndexKeys.Ascending(rs => rs.ReservationId)),
-                new CreateIndexModel<ReservationServiceCollection>(Builders<ReservationServiceCollection>.IndexKeys.Ascending(rs => rs.ServiceId))
+                new CreateIndexModel<ReservationCollection>(
+                    Builders<ReservationCollection>.IndexKeys.Ascending(r => r.CheckInDate)
+                ),
+                new CreateIndexModel<ReservationCollection>(
+                    Builders<ReservationCollection>.IndexKeys.Ascending("client._id")
+                ),
+                new CreateIndexModel<ReservationCollection>(
+                    Builders<ReservationCollection>.IndexKeys.Ascending("room._id")
+                )
             });
         }
     }

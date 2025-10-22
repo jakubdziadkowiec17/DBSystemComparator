@@ -24,7 +24,7 @@ namespace DBSystemComparator_API.Repositories.Interfaces
         Task<int> UpdateRoomsPriceForReservationsTo2024Async(int priceDecrement);
         // DELETE
         Task<int> DeletePaymentsOlderThan2024Async();
-        Task<int> DeletePaymentsWithoutReservationAsync();
+        Task<int> DeleteReservationsWithoutPaymentAsync();
         Task<int> DeleteReservationsServicesOlderThan2024Async();
         Task<int> DeleteReservationsServicesWithServicePriceBelowAsync(int price);
         Task<int> DeleteUnusedServicesAsync();

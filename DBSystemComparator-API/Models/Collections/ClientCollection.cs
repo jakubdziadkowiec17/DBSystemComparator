@@ -6,23 +6,22 @@ namespace DBSystemComparator_API.Models.Collections
     public class ClientCollection
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-        [BsonElement("FirstName")]
+        public ObjectId Id { get; set; }
+        [BsonElement("firstName")]
         public string FirstName { get; set; }
-        [BsonElement("SecondName")]
+        [BsonElement("secondName")]
         public string SecondName { get; set; }
-        [BsonElement("LastName")]
+        [BsonElement("lastName")]
         public string LastName { get; set; }
-        [BsonElement("Email")]
+        [BsonElement("email")]
         public string Email { get; set; }
-        [BsonElement("DateOfBirth")]
+        [BsonElement("dateOfBirth")]
         public DateTime DateOfBirth { get; set; }
-        [BsonElement("Address")]
+        [BsonElement("address")]
         public string Address { get; set; }
-        [BsonElement("PhoneNumber")]
+        [BsonElement("phoneNumber")]
         public string PhoneNumber { get; set; }
-        [BsonElement("IsActive")]
+        [BsonElement("isActive")]
         public bool IsActive { get; set; }
     }
 }

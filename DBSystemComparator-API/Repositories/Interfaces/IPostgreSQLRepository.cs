@@ -1,4 +1,5 @@
 ﻿using DBSystemComparator_API.Models.DTOs;
+using static DBSystemComparator_API.Repositories.Implementations.PostgreSQLRepository;
 
 namespace DBSystemComparator_API.Repositories.Interfaces
 {
@@ -24,7 +25,7 @@ namespace DBSystemComparator_API.Repositories.Interfaces
         Task<int> UpdateRoomsPriceForReservationsTo2024Async(int priceDecrement);
         // DELETE
         Task<int> DeletePaymentsOlderThan2024Async();
-        Task<int> DeletePaymentsWithoutReservationAsync();
+        Task<int> DeleteReservationsWithoutPaymentAsync();
         Task<int> DeleteReservationsServicesOlderThan2024Async();
         Task<int> DeleteReservationsServicesWithServicePriceBelowAsync(int price);
         Task<int> DeleteUnusedServicesAsync();
@@ -40,6 +41,12 @@ namespace DBSystemComparator_API.Repositories.Interfaces
         Task<List<int>> GetAllRoomIdsAsync();
         Task<List<int>> GetAllServiceIdsAsync();
         Task<List<int>> GetAllReservationIdsAsync();
+        Task<List<ClientDTO>> GetAllClientsAsync();
+        Task<List<RoomDTO>> GetAllRoomsAsync();
+        Task<List<ServiceDTO>> GetAllServicesAsync();
+        Task<List<ReservationDTO>> GetAllReservationsAsync();
+        Task<List<ReservationServiceDTO>> GetAllReservationsServicesAsync();
+        Task<List<PaymentDTO>> GetAllPaymentsAsync();
         Task<int> DeleteAllClientsAsync();
         Task<int> DeleteAllRoomsAsync();
         Task<int> DeleteAllReservationsAsync();

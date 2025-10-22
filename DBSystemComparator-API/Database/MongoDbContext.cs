@@ -1,5 +1,4 @@
 ﻿using DBSystemComparator_API.Models.Collections;
-using Microsoft.EntityFrameworkCore;
 using MongoDB.Driver;
 
 namespace DBSystemComparator_API.Database
@@ -18,9 +17,7 @@ namespace DBSystemComparator_API.Database
 
         public IMongoCollection<ClientCollection> Clients => _mongoDatabase.GetCollection<ClientCollection>("Clients");
         public IMongoCollection<RoomCollection> Rooms => _mongoDatabase.GetCollection<RoomCollection>("Rooms");
-        public IMongoCollection<ReservationCollection> Reservations => _mongoDatabase.GetCollection<ReservationCollection>("Reservations");
-        public IMongoCollection<PaymentCollection> Payments => _mongoDatabase.GetCollection<PaymentCollection>("Payments");
         public IMongoCollection<Models.Collections.ServiceCollection> Services => _mongoDatabase.GetCollection<Models.Collections.ServiceCollection>("Services");
-        public IMongoCollection<ReservationServiceCollection> ReservationsServices => _mongoDatabase.GetCollection<ReservationServiceCollection>("ReservationsServices");
+        public IMongoCollection<ReservationCollection> Reservations => _mongoDatabase.GetCollection<ReservationCollection>("Reservations");
     }
 }

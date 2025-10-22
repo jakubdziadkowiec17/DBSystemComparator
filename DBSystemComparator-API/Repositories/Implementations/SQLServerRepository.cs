@@ -272,9 +272,9 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteNonQueryAsync(sql);
         }
 
-        public Task<int> DeletePaymentsWithoutReservationAsync()
+        public Task<int> DeleteReservationsWithoutPaymentAsync()
         {
-            var sql = @"DELETE FROM Payments WHERE ReservationId NOT IN (SELECT Id FROM Reservations)";
+            var sql = @"DELETE FROM Reservations WHERE Id NOT IN (SELECT ReservationId FROM Payments)";
             return ExecuteNonQueryAsync(sql);
         }
 

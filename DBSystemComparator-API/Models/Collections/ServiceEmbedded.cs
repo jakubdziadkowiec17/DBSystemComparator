@@ -3,15 +3,13 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace DBSystemComparator_API.Models.Collections
 {
-    public class ServiceCollection
+    public class ServiceEmbedded
     {
-        [BsonId]
-        public ObjectId Id { get; set; }
+        [BsonElement("serviceId")]
+        public ObjectId ServiceId { get; set; }
         [BsonElement("name")]
         public string Name { get; set; }
         [BsonElement("price")]
         public int Price { get; set; }
-        [BsonElement("isActive")]
-        public bool IsActive { get; set; }
     }
 }

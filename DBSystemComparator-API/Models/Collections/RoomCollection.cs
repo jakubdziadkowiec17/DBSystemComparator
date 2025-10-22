@@ -6,15 +6,14 @@ namespace DBSystemComparator_API.Models.Collections
     public class RoomCollection
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-        [BsonElement("Number")]
+        public ObjectId Id { get; set; }
+        [BsonElement("number")]
         public int Number { get; set; }
-        [BsonElement("Capacity")]
+        [BsonElement("capacity")]
         public int Capacity { get; set; }
-        [BsonElement("PricePerNight")]
+        [BsonElement("pricePerNight")]
         public int PricePerNight { get; set; }
-        [BsonElement("IsActive")]
+        [BsonElement("isActive")]
         public bool IsActive { get; set; }
     }
 }

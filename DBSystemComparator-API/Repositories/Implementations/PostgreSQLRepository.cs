@@ -8,6 +8,12 @@ namespace DBSystemComparator_API.Repositories.Implementations
     public class PostgreSQLRepository : IPostgreSQLRepository
     {
         private readonly string _connectionString;
+        public class ClientDTO { public int Id; public string FirstName; public string SecondName; public string LastName; public string Email; public DateTime BirthDate; public string Address; public string PhoneNumber; public bool IsActive; }
+        public class RoomDTO { public int Id; public int RoomNumber; public int Floor; public int Price; public bool IsAvailable; }
+        public class ServiceDTO { public int Id; public string Name; public int Price; public bool IsAvailable; }
+        public class ReservationDTO { public int Id; public int ClientId; public int RoomId; public DateTime CheckInDate; public DateTime? CheckOutDate; public DateTime CreationDate; }
+        public class ReservationServiceDTO { public int ReservationId; public int ServiceId; public DateTime CreationDate; }
+        public class PaymentDTO { public int Id; public int ReservationId; public string Description; public int Amount; public DateTime PaymentDate; }
 
         public PostgreSQLRepository(string connectionString)
         {
@@ -233,9 +239,9 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteNonQueryAsync(sql);
         }
 
-        public Task<int> DeletePaymentsWithoutReservationAsync()
+        public Task<int> DeleteReservationsWithoutPaymentAsync()
         {
-            var sql = @"DELETE FROM payments WHERE reservationid NOT IN (SELECT id FROM reservations)";
+            var sql = @"DELETE FROM reservations WHERE id NOT IN (SELECT reservationid FROM payments)";
             return ExecuteNonQueryAsync(sql);
         }
 
@@ -457,6 +463,164 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 ids.Add(reader.GetInt32(0));
 
             return ids;
+        }
+
+        public async Task<List<ClientDTO>> GetAllClientsAsync()
+        {
+            var clients = new List<ClientDTO>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"SELECT id, firstname, secondname, lastname, email, dateofbirth, address, phonenumber, isactive FROM clients";
+
+            await using var cmd = new NpgsqlCommand(sql, connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                clients.Add(new ClientDTO
+                {
+                    Id = reader.GetInt32(0),
+                    FirstName = reader.GetString(1),
+                    SecondName = reader.GetString(2),
+                    LastName = reader.GetString(3),
+                    Email = reader.GetString(4),
+                    BirthDate = reader.GetDateTime(5),
+                    Address = reader.GetString(6),
+                    PhoneNumber = reader.GetString(7),
+                    IsActive = reader.GetBoolean(8)
+                });
+            }
+
+            return clients;
+        }
+
+        public async Task<List<RoomDTO>> GetAllRoomsAsync()
+        {
+            var rooms = new List<RoomDTO>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"SELECT id, number, capacity, pricepernight, isactive FROM rooms";
+
+            await using var cmd = new NpgsqlCommand(sql, connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                rooms.Add(new RoomDTO
+                {
+                    Id = reader.GetInt32(0),
+                    RoomNumber = reader.GetInt32(1),
+                    Floor = reader.GetInt32(2),
+                    Price = reader.GetInt32(3),
+                    IsAvailable = reader.GetBoolean(4)
+                });
+            }
+
+            return rooms;
+        }
+
+        public async Task<List<ServiceDTO>> GetAllServicesAsync()
+        {
+            var services = new List<ServiceDTO>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"SELECT id, name, price, isactive FROM services";
+
+            await using var cmd = new NpgsqlCommand(sql, connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                services.Add(new ServiceDTO
+                {
+                    Id = reader.GetInt32(0),
+                    Name = reader.GetString(1),
+                    Price = reader.GetInt32(2),
+                    IsAvailable = reader.GetBoolean(3)
+                });
+            }
+
+            return services;
+        }
+
+        public async Task<List<ReservationDTO>> GetAllReservationsAsync()
+        {
+            var reservations = new List<ReservationDTO>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"SELECT id, clientid, roomid, checkindate, checkoutdate, creationdate FROM reservations";
+
+            await using var cmd = new NpgsqlCommand(sql, connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                reservations.Add(new ReservationDTO
+                {
+                    Id = reader.GetInt32(0),
+                    ClientId = reader.GetInt32(1),
+                    RoomId = reader.GetInt32(2),
+                    CheckInDate = reader.GetDateTime(3),
+                    CheckOutDate = reader.IsDBNull(4) ? null : reader.GetDateTime(4),
+                    CreationDate = reader.GetDateTime(5)
+                });
+            }
+
+            return reservations;
+        }
+
+        public async Task<List<ReservationServiceDTO>> GetAllReservationsServicesAsync()
+        {
+            var resServices = new List<ReservationServiceDTO>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"SELECT reservationid, serviceid, creationdate FROM reservationsservices";
+
+            await using var cmd = new NpgsqlCommand(sql, connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                resServices.Add(new ReservationServiceDTO
+                {
+                    ReservationId = reader.GetInt32(0),
+                    ServiceId = reader.GetInt32(1),
+                    CreationDate = reader.GetDateTime(2)
+                });
+            }
+
+            return resServices;
+        }
+
+        public async Task<List<PaymentDTO>> GetAllPaymentsAsync()
+        {
+            var payments = new List<PaymentDTO>();
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            const string sql = @"SELECT id, reservationid, description, sum, creationdate FROM payments";
+
+            await using var cmd = new NpgsqlCommand(sql, connection);
+            await using var reader = await cmd.ExecuteReaderAsync();
+
+            while (await reader.ReadAsync())
+            {
+                payments.Add(new PaymentDTO
+                {
+                    Id = reader.GetInt32(0),
+                    ReservationId = reader.GetInt32(1),
+                    Description = reader.GetString(2),
+                    Amount = reader.GetInt32(3),
+                    PaymentDate = reader.GetDateTime(4)
+                });
+            }
+
+            return payments;
         }
 
         public Task<int> DeleteAllClientsAsync() => ExecuteNonQueryAsync("DELETE FROM clients");

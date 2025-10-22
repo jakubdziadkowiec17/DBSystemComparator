@@ -103,7 +103,7 @@ using (var scope = app.Services.CreateScope())
 using (var scope = app.Services.CreateScope())
 {
     var mongoDbContext = scope.ServiceProvider.GetRequiredService<MongoDbContext>();
-    await MongoDbSeeder.CreateCollectionsAndIndexesAsync(mongoDbContext.Database);
+    await MongoDbSeeder.CreateCollectionsAndIndexesAsync(mongoDbContext);
 }
 
 // Cassandra

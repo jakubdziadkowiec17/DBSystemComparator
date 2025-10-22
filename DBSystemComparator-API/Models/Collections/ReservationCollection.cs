@@ -6,17 +6,20 @@ namespace DBSystemComparator_API.Models.Collections
     public class ReservationCollection
     {
         [BsonId]
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string ClientId { get; set; }
-        [BsonRepresentation(BsonType.ObjectId)]
-        public string RoomId { get; set; }
-        [BsonElement("CheckInDate")]
+        public ObjectId Id { get; set; }
+        [BsonElement("client")]
+        public ClientCollection Client { get; set; }
+        [BsonElement("room")]
+        public RoomCollection Room { get; set; }
+        [BsonElement("checkInDate")]
         public DateTime CheckInDate { get; set; }
-        [BsonElement("CheckOutDate")]
-        public DateTime CheckOutDate { get; set; }
-        [BsonElement("CreationDate")]
+        [BsonElement("checkOutDate")]
+        public DateTime? CheckOutDate { get; set; }
+        [BsonElement("creationDate")]
         public DateTime CreationDate { get; set; }
+        [BsonElement("services")]
+        public List<ServiceEmbedded> Services { get; set; } = new();
+        [BsonElement("payments")]
+        public List<PaymentEmbedded> Payments { get; set; } = new();
     }
 }

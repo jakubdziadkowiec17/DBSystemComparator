@@ -9,34 +9,15 @@ namespace DBSystemComparator_API.Repositories.Implementations
 {
     public class MongoDBRepository : IMongoDBRepository
     {
-        private readonly MongoDbContext _mongoDbContext;
+        private readonly MongoDbContext _context;
 
-        public MongoDBRepository(MongoDbContext mongoDbContext)
+        public MongoDBRepository(MongoDbContext context)
         {
-            _mongoDbContext = mongoDbContext;
-        }
-
-        public async Task<TablesCountDTO> GetTablesCountAsync()
-        {
-            var clientsCount = await _mongoDbContext.Clients.CountDocumentsAsync(FilterDefinition<ClientCollection>.Empty);
-            var roomsCount = await _mongoDbContext.Rooms.CountDocumentsAsync(FilterDefinition<RoomCollection>.Empty);
-            var reservationsCount = await _mongoDbContext.Reservations.CountDocumentsAsync(FilterDefinition<ReservationCollection>.Empty);
-            var paymentsCount = await _mongoDbContext.Payments.CountDocumentsAsync(FilterDefinition<PaymentCollection>.Empty);
-            var servicesCount = await _mongoDbContext.Services.CountDocumentsAsync(FilterDefinition<Models.Collections.ServiceCollection>.Empty);
-            var reservationsServicesCount = await _mongoDbContext.ReservationsServices.CountDocumentsAsync(FilterDefinition<ReservationServiceCollection>.Empty);
-
-            return new TablesCountDTO
-            {
-                ClientsCount = (int)clientsCount,
-                RoomsCount = (int)roomsCount,
-                ReservationsCount = (int)reservationsCount,
-                PaymentsCount = (int)paymentsCount,
-                ServicesCount = (int)servicesCount,
-                ReservationsServicesCount = (int)reservationsServicesCount
-            };
+            _context = context;
         }
 
         // CREATE
+
         public async Task<string> CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)
         {
             var client = new ClientCollection
@@ -50,8 +31,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 PhoneNumber = phone,
                 IsActive = isActive
             };
-
-            await _mongoDbContext.Clients.InsertOneAsync(client);
+            await _context.Clients.InsertOneAsync(client);
             return client.Id.ToString();
         }
 
@@ -64,8 +44,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 PricePerNight = pricePerNight,
                 IsActive = isActive
             };
-
-            await _mongoDbContext.Rooms.InsertOneAsync(room);
+            await _context.Rooms.InsertOneAsync(room);
             return room.Id.ToString();
         }
 
@@ -77,495 +56,383 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 Price = price,
                 IsActive = isActive
             };
-
-            await _mongoDbContext.Services.InsertOneAsync(service);
+            await _context.Services.InsertOneAsync(service);
             return service.Id.ToString();
         }
 
-        public async Task<string> CreateReservationAsync(string clientId, string roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)
+        public async Task<List<string>> CreateClientsAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive, int count)
         {
-            var reservation = new ReservationCollection
-            {
-                ClientId = clientId,
-                RoomId = roomId,
-                CheckInDate = checkIn,
-                CheckOutDate = checkOut,
-                CreationDate = creationDate
-            };
+            var clients = Enumerable.Range(0, count)
+                .Select(_ => new ClientCollection
+                {
+                    FirstName = firstName,
+                    SecondName = secondName,
+                    LastName = lastName,
+                    Email = email,
+                    DateOfBirth = dob,
+                    Address = address,
+                    PhoneNumber = phone,
+                    IsActive = isActive
+                }).ToList();
 
-            await _mongoDbContext.Reservations.InsertOneAsync(reservation);
-            return reservation.Id.ToString();
+            await _context.Clients.InsertManyAsync(clients);
+            return clients.Select(c => c.Id.ToString()).ToList();
         }
 
-        public async Task CreateReservationServiceAsync(string reservationId, string serviceId, DateTime creationDate)
+        public async Task<List<string>> CreateRoomsAsync(int number, int capacity, int pricePerNight, bool isActive, int count)
         {
-            var rs = new ReservationServiceCollection
-            {
-                ReservationId = reservationId,
-                ServiceId = serviceId,
-                CreationDate = creationDate
-            };
+            var rooms = Enumerable.Range(0, count)
+                .Select(_ => new RoomCollection
+                {
+                    Number = number,
+                    Capacity = capacity,
+                    PricePerNight = pricePerNight,
+                    IsActive = isActive
+                }).ToList();
 
-            await _mongoDbContext.ReservationsServices.InsertOneAsync(rs);
-        }
-
-        public async Task<string> CreatePaymentAsync(string reservationId, string description, int sum, DateTime creationDate)
-        {
-            var payment = new PaymentCollection
-            {
-                ReservationId = reservationId,
-                Description = description,
-                Sum = sum,
-                CreationDate = creationDate
-            };
-
-            await _mongoDbContext.Payments.InsertOneAsync(payment);
-            return payment.Id.ToString();
+            await _context.Rooms.InsertManyAsync(rooms);
+            return rooms.Select(r => r.Id.ToString()).ToList();
         }
 
         // READ
-        public async Task<List<Dictionary<string, object>>> ReadClientsWithRoomsAsync(bool isActive)
+
+        public async Task<List<Dictionary<string, object>>> ReadReservationsAfter2024Async()
         {
-            var pipeline = new[]
+            var filter = Builders<ReservationCollection>.Filter.Gt(r => r.CheckInDate, new DateTime(2024, 1, 1));
+            var reservations = await _context.Reservations.Find(filter).ToListAsync();
+
+            return reservations.Select(r => new Dictionary<string, object>
             {
-                new BsonDocument("$match", new BsonDocument("IsActive", isActive)),
-
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Reservations" },
-                    { "localField", "_id" },
-                    { "foreignField", "ClientId" },
-                    { "as", "reservations" }
-                }),
-                new BsonDocument("$unwind", new BsonDocument
-                {
-                    { "path", "$reservations" },
-                    { "preserveNullAndEmptyArrays", true }
-                }),
-
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Rooms" },
-                    { "localField", "reservations.RoomId" },
-                    { "foreignField", "_id" },
-                    { "as", "room" }
-                }),
-                new BsonDocument("$unwind", new BsonDocument
-                {
-                    { "path", "$room" },
-                    { "preserveNullAndEmptyArrays", true }
-                }),
-
-                new BsonDocument("$match", new BsonDocument("room.IsActive", isActive)),
-
-                new BsonDocument("$project", new BsonDocument
-                {
-                    { "ClientId", "$_id" },
-                    { "FirstName", "$FirstName" },
-                    { "LastName", "$LastName" },
-                    { "RoomNumber", "$room.Number" },
-                    { "PricePerNight", "$room.PricePerNight" }
-                })
-            };
-
-            var result = await _mongoDbContext.Clients.Aggregate<BsonDocument>(pipeline).ToListAsync();
-            return result.Select(doc => doc.ToDictionary()).ToList();
+                ["ReservationId"] = r.Id.ToString(),
+                ["CheckInDate"] = r.CheckInDate,
+                ["CheckOutDate"] = r.CheckOutDate,
+                ["FirstName"] = r.Client.FirstName,
+                ["LastName"] = r.Client.LastName
+            }).ToList();
         }
 
-        public async Task<List<Dictionary<string, object>>> ReadRoomsWithReservationCountAsync()
+        public async Task<List<Dictionary<string, object>>> ReadReservationsWithPaymentsAboveAsync(int minSum)
         {
-            var pipeline = new[]
-            {
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Reservations" },
-                    { "localField", "_id" },
-                    { "foreignField", "RoomId" },
-                    { "as", "reservations" }
-                }),
-                new BsonDocument("$addFields", new BsonDocument("ReservationCount", new BsonDocument("$size", "$reservations"))),
-                new BsonDocument("$match", new BsonDocument("ReservationCount", new BsonDocument("$gt", 0))),
-                new BsonDocument("$project", new BsonDocument
-                {
-                    { "RoomId", "$_id" },
-                    { "Number", "$Number" },
-                    { "Capacity", "$Capacity" },
-                    { "ReservationCount", "$ReservationCount" }
-                })
-            };
+            var filter = Builders<ReservationCollection>.Filter.ElemMatch(r => r.Payments, p => p.Sum > minSum);
+            var reservations = await _context.Reservations.Find(filter).ToListAsync();
 
-            var result = await _mongoDbContext.Rooms.Aggregate<BsonDocument>(pipeline).ToListAsync();
-            return result.Select(doc => doc.ToDictionary()).ToList();
+            var result = new List<Dictionary<string, object>>();
+            foreach (var r in reservations)
+            {
+                foreach (var p in r.Payments.Where(p => p.Sum > minSum))
+                {
+                    result.Add(new Dictionary<string, object>
+                    {
+                        ["ReservationId"] = r.Id.ToString(),
+                        ["CheckInDate"] = r.CheckInDate,
+                        ["CheckOutDate"] = r.CheckOutDate,
+                        ["Sum"] = p.Sum,
+                        ["FirstName"] = r.Client.FirstName,
+                        ["LastName"] = r.Client.LastName
+                    });
+                }
+            }
+
+            return result;
         }
 
-        public async Task<List<Dictionary<string, object>>> ReadServicesUsageAsync()
+        public async Task<List<Dictionary<string, object>>> ReadClientsWithActiveReservationsAsync()
         {
-            var pipeline = new[]
-            {
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "ReservationsServices" },
-                    { "localField", "_id" },
-                    { "foreignField", "ServiceId" },
-                    { "as", "reservationsServices" }
-                }),
-                new BsonDocument("$addFields", new BsonDocument("UsageCount", new BsonDocument("$size", "$reservationsServices"))),
-                new BsonDocument("$sort", new BsonDocument("UsageCount", -1)),
-                new BsonDocument("$project", new BsonDocument
-                {
-                    { "ServiceName", "$Name" },
-                    { "Price", "$Price" },
-                    { "UsageCount", "$UsageCount" }
-                })
-            };
+            var filter = Builders<ReservationCollection>.Filter.Or(
+                Builders<ReservationCollection>.Filter.Eq(r => r.CheckOutDate, null),
+                Builders<ReservationCollection>.Filter.Gte(r => r.CheckOutDate, DateTime.Now)
+            );
 
-            var result = await _mongoDbContext.Services.Aggregate<BsonDocument>(pipeline).ToListAsync();
-            return result.Select(doc => doc.ToDictionary()).ToList();
+            var reservations = await _context.Reservations.Find(filter).ToListAsync();
+
+            return reservations
+                .Select(r => new Dictionary<string, object>
+                {
+                    ["Id"] = r.Client.Id.ToString(),
+                    ["FirstName"] = r.Client.FirstName,
+                    ["LastName"] = r.Client.LastName,
+                    ["Email"] = r.Client.Email
+                })
+                .GroupBy(d => d["Id"])
+                .Select(g => g.First())
+                .ToList();
         }
 
-        public async Task<List<Dictionary<string, object>>> ReadPaymentsAboveAsync(int minSum)
+        public async Task<List<Dictionary<string, object>>> ReadActiveServicesUsedInReservationsAsync()
         {
-            var pipeline = new[]
-            {
-                new BsonDocument("$match", new BsonDocument("Sum", new BsonDocument("$gt", minSum))),
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Reservations" },
-                    { "localField", "ReservationId" },
-                    { "foreignField", "_id" },
-                    { "as", "reservation" }
-                }),
-                new BsonDocument("$unwind", new BsonDocument("path", "$reservation")),
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Clients" },
-                    { "localField", "reservation.ClientId" },
-                    { "foreignField", "_id" },
-                    { "as", "client" }
-                }),
-                new BsonDocument("$unwind", new BsonDocument("path", "$client")),
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Rooms" },
-                    { "localField", "reservation.RoomId" },
-                    { "foreignField", "_id" },
-                    { "as", "room" }
-                }),
-                new BsonDocument("$unwind", new BsonDocument("path", "$room")),
-                new BsonDocument("$project", new BsonDocument
-                {
-                    { "PaymentId", "$_id" },
-                    { "Sum", "$Sum" },
-                    { "CreationDate", "$CreationDate" },
-                    { "ClientName", "$client.FirstName" },
-                    { "RoomNumber", "$room.Number" }
-                })
-            };
+            var activeServices = await _context.Services.Find(s => s.IsActive).ToListAsync();
+            var serviceDict = activeServices.ToDictionary(s => s.Id, s => s);
 
-            var result = await _mongoDbContext.Payments.Aggregate<BsonDocument>(pipeline).ToListAsync();
-            return result.Select(doc => doc.ToDictionary()).ToList();
+            var reservations = await _context.Reservations.Find(_ => true).ToListAsync();
+
+            var usedServiceIds = reservations
+                .SelectMany(r => r.Services.Select(s => s.ServiceId))
+                .Distinct();
+
+            var result = usedServiceIds
+                .Where(id => serviceDict.ContainsKey(id))
+                .Select(id => new Dictionary<string, object>
+                {
+                    ["ServiceId"] = id.ToString(),
+                    ["Name"] = serviceDict[id].Name,
+                    ["Price"] = serviceDict[id].Price
+                })
+                .ToList();
+
+            return result;
         }
 
-        public async Task<List<Dictionary<string, object>>> ReadReservationsWithServicesAsync(bool clientActive, bool serviceActive)
+        public async Task<List<Dictionary<string, object>>> ReadCapacityReservationsAsync(int capacityThreshold)
         {
-            var pipeline = new[]
-            {
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Clients" },
-                    { "localField", "ClientId" },
-                    { "foreignField", "_id" },
-                    { "as", "client" }
-                }),
-                new BsonDocument("$unwind", "$client"),
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "ReservationsServices" },
-                    { "localField", "_id" },
-                    { "foreignField", "ReservationId" },
-                    { "as", "reservationsServices" }
-                }),
-                new BsonDocument("$unwind", "$reservationsServices"),
-                new BsonDocument("$lookup", new BsonDocument
-                {
-                    { "from", "Services" },
-                    { "localField", "reservationsServices.ServiceId" },
-                    { "foreignField", "_id" },
-                    { "as", "service" }
-                }),
-                new BsonDocument("$unwind", "$service"),
-                new BsonDocument("$match", new BsonDocument
-                {
-                    { "client.IsActive", clientActive },
-                    { "service.IsActive", serviceActive }
-                }),
-                new BsonDocument("$project", new BsonDocument
-                {
-                    { "ReservationId", "$_id" },
-                    { "LastName", "$client.LastName" },
-                    { "ServiceName", "$service.Name" },
-                    { "Price", "$service.Price" },
-                    { "CheckInDate", "$CheckInDate" },
-                    { "CheckOutDate", "$CheckOutDate" }
-                })
-            };
+            var filter = Builders<ReservationCollection>.Filter.Gt(r => r.Room.Capacity, capacityThreshold);
+            var reservations = await _context.Reservations.Find(filter).ToListAsync();
 
-            var result = await _mongoDbContext.Reservations.Aggregate<BsonDocument>(pipeline).ToListAsync();
-            return result.Select(doc => doc.ToDictionary()).ToList();
+            return reservations.Select(r => new Dictionary<string, object>
+            {
+                ["ReservationId"] = r.Id.ToString(),
+                ["CheckInDate"] = r.CheckInDate,
+                ["CheckOutDate"] = r.CheckOutDate,
+                ["FirstName"] = r.Client.FirstName,
+                ["LastName"] = r.Client.LastName,
+                ["RoomNumber"] = r.Room.Number,
+                ["Capacity"] = r.Room.Capacity
+            }).ToList();
         }
 
         // UPDATE
-        public async Task<long> UpdateClientsAddressPhoneAsync(bool isActive)
+
+        public async Task<long> UpdateClientsAddressAndPhoneAsync(bool isActive)
         {
             var filter = Builders<ClientCollection>.Filter.Eq(c => c.IsActive, isActive);
-            var update = Builders<ClientCollection>.Update
-                .Set(c => c.Address, "Cracow, ul. abc 4")
-                .Set(c => c.PhoneNumber, "123456789");
+            var update = Builders<ClientCollection>.Update.Set(c => c.Address, "Cracow, ul. abc 4").Set(c => c.PhoneNumber, "123456789");
 
-            var result = await _mongoDbContext.Clients.UpdateManyAsync(filter, update);
+            var result = await _context.Clients.UpdateManyAsync(filter, update);
             return result.ModifiedCount;
         }
 
-        public async Task<long> UpdateRoomsPriceJoinReservationsAsync(int minCapacity)
+        public async Task<long> UpdateRoomsPriceForReservationsAsync(int minCapacity, int priceIncrement)
         {
-            var reservedRoomIdsCursor = await _mongoDbContext.Reservations
-                .DistinctAsync<string>("RoomId", FilterDefinition<ReservationCollection>.Empty);
-            var reservedRoomIds = await reservedRoomIdsCursor.ToListAsync();
+            var reservationRoomIds = await _context.Reservations.Distinct(r => r.Room.Id, Builders<ReservationCollection>.Filter.Empty).ToListAsync();
 
-            var filter = Builders<RoomCollection>.Filter.In(r => r.Id, reservedRoomIds) &
-                         Builders<RoomCollection>.Filter.Gte(r => r.Capacity, minCapacity);
-            var update = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, 150);
-            var result = await _mongoDbContext.Rooms.UpdateManyAsync(filter, update);
+            var filter = Builders<RoomCollection>.Filter.And(
+                Builders<RoomCollection>.Filter.Gte(r => r.Capacity, minCapacity),
+                Builders<RoomCollection>.Filter.In(r => r.Id, reservationRoomIds)
+            );
+
+            var update = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, priceIncrement);
+            var result = await _context.Rooms.UpdateManyAsync(filter, update);
             return result.ModifiedCount;
         }
 
-        public async Task<long> UpdateServicesPriceAsync(bool isActive)
+        public async Task<long> UpdateServicesPriceAsync(int priceIncrement, bool isActive)
         {
             var filter = Builders<Models.Collections.ServiceCollection>.Filter.Eq(s => s.IsActive, isActive);
-            var update = Builders<Models.Collections.ServiceCollection>.Update.Inc(s => s.Price, 25);
-            var result = await _mongoDbContext.Services.UpdateManyAsync(filter, update);
+            var update = Builders<Models.Collections.ServiceCollection>.Update.Inc(s => s.Price, priceIncrement);
+
+            var result = await _context.Services.UpdateManyAsync(filter, update);
             return result.ModifiedCount;
         }
 
-        public async Task<long> UpdateRoomsPriceInactiveAsync()
+        public async Task<long> UpdatePriceForInactiveRoomsAsync(double discountMultiplier)
         {
             var filter = Builders<RoomCollection>.Filter.Eq(r => r.IsActive, false);
-            var update = Builders<RoomCollection>.Update.Mul(r => r.PricePerNight, 0.8);
-            var result = await _mongoDbContext.Rooms.UpdateManyAsync(filter, update);
+            var update = Builders<RoomCollection>.Update.Mul(r => r.PricePerNight, discountMultiplier);
+
+            var result = await _context.Rooms.UpdateManyAsync(filter, update);
             return result.ModifiedCount;
         }
 
-        public async Task<long> UpdateRoomsPriceFutureReservationsAsync()
+        public async Task<long> UpdateRoomsPriceForReservationsTo2024Async(int priceDecrement)
         {
-            var futureRoomIds = await _mongoDbContext.Reservations
-                .Find(r => r.CheckInDate > DateTime.Now)
-                .Project(r => r.RoomId)
-                .ToListAsync();
+            var filterReservations = Builders<ReservationCollection>.Filter.Lt(r => r.CheckInDate, new DateTime(2024, 1, 1));
+            var reservationRoomIds = await _context.Reservations.Distinct(r => r.Room.Id, filterReservations).ToListAsync();
 
-            var filter = Builders<RoomCollection>.Filter.In(r => r.Id, futureRoomIds);
-            var update = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, -15);
+            var filterRooms = Builders<RoomCollection>.Filter.In(r => r.Id, reservationRoomIds);
+            var update = Builders<RoomCollection>.Update.Inc(r => r.PricePerNight, -priceDecrement);
 
-            var result = await _mongoDbContext.Rooms.UpdateManyAsync(filter, update);
+            var result = await _context.Rooms.UpdateManyAsync(filterRooms, update);
             return result.ModifiedCount;
         }
 
         // DELETE
-        public async Task<long> DeleteReservationsSmallRoomsAsync(int capacityThreshold)
+
+        public async Task<long> DeletePaymentsOlderThan2024Async()
         {
-            var smallRoomIds = await _mongoDbContext.Rooms
-                .Find(r => r.Capacity < capacityThreshold)
-                .Project(r => r.Id)
-                .ToListAsync();
+            var filterReservations = Builders<ReservationCollection>.Filter.Lt(r => r.CheckInDate, new DateTime(2024, 1, 1));
+            var update = Builders<ReservationCollection>.Update.Set(r => r.Payments, new List<PaymentEmbedded>());
 
-            var filter = Builders<ReservationCollection>.Filter.In(r => r.RoomId, smallRoomIds) &
-                         Builders<ReservationCollection>.Filter.Gt(r => r.CheckInDate, DateTime.Now);
+            var result = await _context.Reservations.UpdateManyAsync(filterReservations, update);
+            return result.ModifiedCount;
+        }
 
-            var result = await _mongoDbContext.Reservations.DeleteManyAsync(filter);
+        public async Task<long> DeleteReservationsWithoutPaymentAsync()
+        {
+            var filter = Builders<ReservationCollection>.Filter.Size(r => r.Payments, 0);
+            var result = await _context.Reservations.DeleteManyAsync(filter);
             return result.DeletedCount;
         }
 
-        public async Task<long> DeleteReservationsServicesFutureAsync(int topRows)
+        public async Task<long> DeleteReservationsServicesOlderThan2024Async()
         {
-            var futureReservations = await _mongoDbContext.Reservations
-                .Find(r => r.CheckInDate > DateTime.Now)
-                .Limit(topRows)
-                .Project(r => r.Id)
-                .ToListAsync();
+            var filterReservations = Builders<ReservationCollection>.Filter.Lt(r => r.CheckInDate, new DateTime(2024, 1, 1));
+            var update = Builders<ReservationCollection>.Update.Set(r => r.Services, new List<ServiceEmbedded>());
 
-            var filter = Builders<ReservationServiceCollection>.Filter.In(rs => rs.ReservationId, futureReservations);
-            var result = await _mongoDbContext.ReservationsServices.DeleteManyAsync(filter);
+            var result = await _context.Reservations.UpdateManyAsync(filterReservations, update);
+            return result.ModifiedCount;
+        }
+
+        public async Task<long> DeleteReservationsServicesWithServicePriceBelowAsync(int price)
+        {
+            var serviceIds = await _context.Services.Find(s => s.Price < price).Project(s => s.Id).ToListAsync();
+
+            if (!serviceIds.Any()) return 0;
+
+            var filterReservations = Builders<ReservationCollection>.Filter.ElemMatch(r => r.Services, s => serviceIds.Contains(s.ServiceId));
+            var update = Builders<ReservationCollection>.Update.PullFilter(r => r.Services, s => serviceIds.Contains(s.ServiceId));
+
+            var result = await _context.Reservations.UpdateManyAsync(filterReservations, update);
+            return result.ModifiedCount;
+        }
+
+        public async Task<long> DeleteUnusedServicesAsync()
+        {
+            var usedServiceIds = _context.Reservations.AsQueryable().SelectMany(r => r.Services).Select(s => s.ServiceId).Distinct().ToList();
+
+            var filter = Builders<Models.Collections.ServiceCollection>.Filter.Nin(s => s.Id, usedServiceIds);
+            var result = await _context.Services.DeleteManyAsync(filter);
+
             return result.DeletedCount;
         }
 
-        public async Task<long> DeleteReservationsWithoutPaymentsAsync()
-        {
-            var paidReservationIds = await _mongoDbContext.Payments
-                .Find(FilterDefinition<PaymentCollection>.Empty)
-                .Project(p => p.ReservationId)
-                .ToListAsync();
+        // HELPERS
 
-            var filter = Builders<ReservationCollection>.Filter.Nin(r => r.Id, paidReservationIds);
-            var result = await _mongoDbContext.Reservations.DeleteManyAsync(filter);
-            return result.DeletedCount;
+        public async Task CreateClientsBatchAsync(IEnumerable<ClientCollection> clients)
+        {
+            if (clients == null || !clients.Any()) return;
+            await _context.Clients.InsertManyAsync(clients);
         }
 
-        public async Task<long> DeleteInactiveClientsWithoutReservationsAsync()
+        public async Task CreateRoomsBatchAsync(IEnumerable<RoomCollection> rooms)
         {
-            var cursor = await _mongoDbContext.Reservations
-                .DistinctAsync<string>("ClientId", FilterDefinition<ReservationCollection>.Empty);
-
-            var activeClientIds = await cursor.ToListAsync();
-
-            var filter = Builders<ClientCollection>.Filter.Eq(c => c.IsActive, false) &
-                         Builders<ClientCollection>.Filter.Nin(c => c.Id, activeClientIds);
-
-            var result = await _mongoDbContext.Clients.DeleteManyAsync(filter);
-            return result.DeletedCount;
+            if (rooms == null || !rooms.Any()) return;
+            await _context.Rooms.InsertManyAsync(rooms);
         }
 
-        public async Task<long> DeleteRoomsWithoutReservationsAsync()
+        public async Task CreateServicesBatchAsync(IEnumerable<Models.Collections.ServiceCollection> services)
         {
-            var cursor = await _mongoDbContext.Reservations
-                .DistinctAsync<string>("RoomId", FilterDefinition<ReservationCollection>.Empty);
-
-            var reservedRoomIds = await cursor.ToListAsync();
-
-            var filter = Builders<RoomCollection>.Filter.Eq(r => r.IsActive, false) &
-                         Builders<RoomCollection>.Filter.Nin(r => r.Id, reservedRoomIds);
-
-            var result = await _mongoDbContext.Rooms.DeleteManyAsync(filter);
-            return result.DeletedCount;
+            if (services == null || !services.Any()) return;
+            await _context.Services.InsertManyAsync(services);
         }
 
-        public Task DeleteAllClientsAsync() => _mongoDbContext.Clients.DeleteManyAsync(FilterDefinition<ClientCollection>.Empty);
-        public Task DeleteAllRoomsAsync() => _mongoDbContext.Rooms.DeleteManyAsync(FilterDefinition<RoomCollection>.Empty);
-        public Task DeleteAllReservationsAsync() => _mongoDbContext.Reservations.DeleteManyAsync(FilterDefinition<ReservationCollection>.Empty);
-        public Task DeleteAllReservationsServicesAsync() => _mongoDbContext.ReservationsServices.DeleteManyAsync(FilterDefinition<ReservationServiceCollection>.Empty);
-        public Task DeleteAllPaymentsAsync() => _mongoDbContext.Payments.DeleteManyAsync(FilterDefinition<PaymentCollection>.Empty);
-        public Task DeleteAllServicesAsync() => _mongoDbContext.Services.DeleteManyAsync(FilterDefinition<Models.Collections.ServiceCollection>.Empty);
-
-        public async Task CreateClientsBatchAsync(IEnumerable<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)> clients)
+        public async Task CreateReservationsBatchAsync(IEnumerable<ReservationCollection> reservations)
         {
-            var documents = clients.Select(c => new ClientCollection
+            if (reservations == null || !reservations.Any()) return;
+            await _context.Reservations.InsertManyAsync(reservations);
+        }
+
+        public async Task<TablesCountDTO> GetTablesCountAsync()
+        {
+            var clientsCount = await _context.Clients.CountDocumentsAsync(FilterDefinition<ClientCollection>.Empty);
+            var roomsCount = await _context.Rooms.CountDocumentsAsync(FilterDefinition<RoomCollection>.Empty);
+            var servicesCount = await _context.Services.CountDocumentsAsync(FilterDefinition<Models.Collections.ServiceCollection>.Empty);
+            var reservationsCount = await _context.Reservations.CountDocumentsAsync(FilterDefinition<ReservationCollection>.Empty);
+
+            var paymentsPipeline = new[]
             {
-                Id = ObjectId.GenerateNewId().ToString(),
-                FirstName = c.firstName,
-                SecondName = c.secondName,
-                LastName = c.lastName,
-                Email = c.email,
-                DateOfBirth = c.dob,
-                Address = c.address,
-                PhoneNumber = c.phone,
-                IsActive = c.isActive
-            }).ToList();
+                new BsonDocument("$project", new BsonDocument("paymentsCount", new BsonDocument("$size", "$payments"))),
+                new BsonDocument("$group", new BsonDocument
+                {
+                    { "_id", BsonNull.Value },
+                    { "totalPayments", new BsonDocument("$sum", "$paymentsCount") }
+                })
+            };
 
-            if (documents.Count > 0)
-                await _mongoDbContext.Clients.InsertManyAsync(documents);
-        }
+            var paymentsResult = await _context.Reservations.Aggregate<BsonDocument>(paymentsPipeline).FirstOrDefaultAsync();
+            var totalPaymentsCount = paymentsResult != null ? paymentsResult["totalPayments"].AsInt32 : 0;
 
-        public async Task CreateRoomsBatchAsync(IEnumerable<(int number, int capacity, int pricePerNight, bool isActive)> rooms)
-        {
-            var documents = rooms.Select(r => new RoomCollection
+            var servicesPipeline = new[]
             {
-                Id = ObjectId.GenerateNewId().ToString(),
-                Number = r.number,
-                Capacity = r.capacity,
-                PricePerNight = r.pricePerNight,
-                IsActive = r.isActive
-            }).ToList();
+                new BsonDocument("$project", new BsonDocument("servicesCount", new BsonDocument("$size", "$services"))),
+                new BsonDocument("$group", new BsonDocument
+                {
+                    { "_id", BsonNull.Value },
+                    { "totalServices", new BsonDocument("$sum", "$servicesCount") }
+                })
+            };
 
-            if (documents.Count > 0)
-                await _mongoDbContext.Rooms.InsertManyAsync(documents);
-        }
+            var servicesResult = await _context.Reservations.Aggregate<BsonDocument>(servicesPipeline).FirstOrDefaultAsync();
+            var totalReservationServicesCount = servicesResult != null ? servicesResult["totalServices"].AsInt32 : 0;
 
-        public async Task CreateServicesBatchAsync(IEnumerable<(string name, int price, bool isActive)> services)
-        {
-            var documents = services.Select(s => new Models.Collections.ServiceCollection
+            return new TablesCountDTO()
             {
-                Id = ObjectId.GenerateNewId().ToString(),
-                Name = s.name,
-                Price = s.price,
-                IsActive = s.isActive
-            }).ToList();
-
-            if (documents.Count > 0)
-                await _mongoDbContext.Services.InsertManyAsync(documents);
-        }
-
-        public async Task CreateReservationsBatchAsync(IEnumerable<(string clientId, string roomId, DateTime checkIn, DateTime checkOut, DateTime creationDate)> reservations)
-        {
-            var documents = reservations.Select(r => new ReservationCollection
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                ClientId = r.clientId,
-                RoomId = r.roomId,
-                CheckInDate = r.checkIn,
-                CheckOutDate = r.checkOut,
-                CreationDate = r.creationDate
-            }).ToList();
-
-            if (documents.Count > 0)
-                await _mongoDbContext.Reservations.InsertManyAsync(documents);
-        }
-
-        public async Task CreatePaymentsBatchAsync(IEnumerable<(string reservationId, string description, int sum, DateTime creationDate)> payments)
-        {
-            var documents = payments.Select(p => new PaymentCollection
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                ReservationId = p.reservationId,
-                Description = p.description,
-                Sum = p.sum,
-                CreationDate = p.creationDate
-            }).ToList();
-
-            if (documents.Count > 0)
-                await _mongoDbContext.Payments.InsertManyAsync(documents);
-        }
-
-        public async Task CreateReservationsServicesBatchAsync(IEnumerable<(string reservationId, string serviceId, DateTime creationDate)> resServices)
-        {
-            var documents = resServices.Select(rs => new ReservationServiceCollection
-            {
-                ReservationId = rs.reservationId,
-                ServiceId = rs.serviceId,
-                CreationDate = rs.creationDate
-            }).ToList();
-
-            if (documents.Count > 0)
-                await _mongoDbContext.ReservationsServices.InsertManyAsync(documents);
+                ClientsCount = (int)clientsCount,
+                RoomsCount = (int)roomsCount,
+                ServicesCount = (int)servicesCount,
+                ReservationsCount = (int)reservationsCount,
+                PaymentsCount = totalPaymentsCount,
+                ReservationsServicesCount = totalReservationServicesCount
+            };
         }
 
         public async Task<List<string>> GetAllClientIdsAsync()
         {
-            return await _mongoDbContext.Clients
-                .Find(FilterDefinition<ClientCollection>.Empty)
-                .Project(c => c.Id)
-                .ToListAsync();
+            var ids = await _context.Clients.Find(Builders<ClientCollection>.Filter.Empty)
+                                           .Project(c => c.Id)
+                                           .ToListAsync();
+            return ids.Select(id => id.ToString()).ToList();
         }
 
         public async Task<List<string>> GetAllRoomIdsAsync()
         {
-            return await _mongoDbContext.Rooms
-                .Find(FilterDefinition<RoomCollection>.Empty)
-                .Project(r => r.Id)
-                .ToListAsync();
+            var ids = await _context.Rooms.Find(Builders<RoomCollection>.Filter.Empty)
+                                          .Project(r => r.Id)
+                                          .ToListAsync();
+            return ids.Select(id => id.ToString()).ToList();
         }
 
         public async Task<List<string>> GetAllServiceIdsAsync()
         {
-            return await _mongoDbContext.Services
-                .Find(FilterDefinition<Models.Collections.ServiceCollection>.Empty)
-                .Project(s => s.Id)
-                .ToListAsync();
+            var ids = await _context.Services.Find(Builders<Models.Collections.ServiceCollection>.Filter.Empty)
+                                             .Project(s => s.Id)
+                                             .ToListAsync();
+            return ids.Select(id => id.ToString()).ToList();
         }
 
         public async Task<List<string>> GetAllReservationIdsAsync()
         {
-            return await _mongoDbContext.Reservations
-                .Find(FilterDefinition<ReservationCollection>.Empty)
-                .Project(r => r.Id)
-                .ToListAsync();
+            var ids = await _context.Reservations.Find(Builders<ReservationCollection>.Filter.Empty)
+                                                 .Project(r => r.Id)
+                                                 .ToListAsync();
+            return ids.Select(id => id.ToString()).ToList();
+        }
+
+        public IMongoCollection<BsonDocument> GetReservationCollectionRaw()
+        {
+            return _context.Database.GetCollection<BsonDocument>("Reservations");
+        }
+
+        public async Task<long> DeleteAllClientsAsync()
+        {
+            var result = await _context.Clients.DeleteManyAsync(FilterDefinition<ClientCollection>.Empty);
+            return result.DeletedCount;
+        }
+
+        public async Task<long> DeleteAllRoomsAsync()
+        {
+            var result = await _context.Rooms.DeleteManyAsync(FilterDefinition<RoomCollection>.Empty);
+            return result.DeletedCount;
+        }
+
+        public async Task<long> DeleteAllServicesAsync()
+        {
+            var result = await _context.Services.DeleteManyAsync(FilterDefinition<Models.Collections.ServiceCollection>.Empty);
+            return result.DeletedCount;
+        }
+
+        public async Task<long> DeleteAllReservationsAsync()
+        {
+            var result = await _context.Reservations.DeleteManyAsync(FilterDefinition<ReservationCollection>.Empty);
+            return result.DeletedCount;
         }
     }
 }

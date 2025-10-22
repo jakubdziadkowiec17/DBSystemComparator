@@ -1,7 +1,9 @@
 ﻿using DBSystemComparator_API.Constants;
+using DBSystemComparator_API.Models.Collections;
 using DBSystemComparator_API.Models.DTOs;
 using DBSystemComparator_API.Repositories.Interfaces;
 using DBSystemComparator_API.Services.Interfaces;
+using MongoDB.Bson;
 
 namespace DBSystemComparator_API.Services.Implementations
 {
@@ -31,7 +33,7 @@ namespace DBSystemComparator_API.Services.Implementations
                 PostgreSQL = tablesCountForPostgreSQL,
                 SQLServer = tablesCountForSQLServer,
                 MongoDB = tablesCountForMongoDB,
-                Cassandra = tablesCountForMongoDB,//////////////////
+                Cassandra = tablesCountForSQLServer,//////////////////
             };
         }
 
@@ -54,12 +56,10 @@ namespace DBSystemComparator_API.Services.Implementations
             await _postgreSQLRepository.DeleteAllReservationsServicesAsync();
             await _postgreSQLRepository.DeleteAllPaymentsAsync();
 
+            //await _mongoDBRepository.DeleteAllReservationsAsync();
             //await _mongoDBRepository.DeleteAllClientsAsync();
             //await _mongoDBRepository.DeleteAllRoomsAsync();
             //await _mongoDBRepository.DeleteAllServicesAsync();
-            //await _mongoDBRepository.DeleteAllReservationsAsync();
-            //await _mongoDBRepository.DeleteAllReservationsServicesAsync();
-            //await _mongoDBRepository.DeleteAllPaymentsAsync();
 
             //await _cassandraRepository.DeleteAllClientsAsync();
             //await _cassandraRepository.DeleteAllRoomsAsync();
@@ -114,7 +114,7 @@ namespace DBSystemComparator_API.Services.Implementations
 
                     //_mongoDBRepository.CreateClientsBatchAsync(clientsBatch),
                     //_mongoDBRepository.CreateRoomsBatchAsync(roomsBatch),
-                    //_mongoDBRepository.CreateServicesBatchAsync(servicesBatch),
+                    //_mongoDBRepository.CreateServicesBatchAsync(servicesBatch)
 
                     //_cassandraRepository.CreateClientsBatchAsync(clientsBatch),
                     //_cassandraRepository.CreateRoomsBatchAsync(roomsBatch),
@@ -144,7 +144,7 @@ namespace DBSystemComparator_API.Services.Implementations
 
                 var reservationsSQL = new List<(int, int, DateTime, DateTime, DateTime)>();
                 var reservationsPG = new List<(int, int, DateTime, DateTime, DateTime)>();
-                var reservationsMongo = new List<(string, string, DateTime, DateTime, DateTime)>();
+                var reservationsMongo = new List<(ObjectId, ObjectId, DateTime, DateTime?, DateTime, List<ServiceEmbedded>, List<PaymentEmbedded>)>();
                 var reservationsCassandra = new List<(Guid, Guid, DateTime, DateTime, DateTime)>();
 
                 for (int i = batchStart; i < batchEnd; i++)
@@ -153,17 +153,20 @@ namespace DBSystemComparator_API.Services.Implementations
                     var checkOut = checkIn.AddDays(random.Next(1, 14));
                     var now = DateTime.Now;
 
+                    var payments = new List<PaymentEmbedded>();
+                    var services = new List<ServiceEmbedded>();
+
                     reservationsSQL.Add((allClientIdsSQL[i], allRoomIdsSQL[i], checkIn, checkOut, now));
                     reservationsPG.Add((allClientIdsPG[i], allRoomIdsPG[i], checkIn, checkOut, now));
-                    //reservationsMongo.Add((allClientIdsMongo[i], allRoomIdsMongo[i], checkIn, checkOut, now));
+                    //reservationsMongo.Add((ObjectId.Parse(allClientIdsMongo[i]), ObjectId.Parse(allRoomIdsMongo[i]), checkIn, checkOut, now, services, payments));
                     //reservationsCassandra.Add((allClientIdsCassandra[i], allRoomIdsCassandra[i], checkIn, checkOut, now));
                 }
 
                 await Task.WhenAll(
                     _sqlServerRepository.CreateReservationsBatchAsync(reservationsSQL),
                     _postgreSQLRepository.CreateReservationsBatchAsync(reservationsPG)
-                    //_mongoDBRepository.CreateReservationsBatchAsync(reservationsMongo),
-                   // _cassandraRepository.CreateReservationsBatchAsync(reservationsCassandra)
+                    //_mongoDBRepository.CreateReservationsBatchAsync(reservationsMongo)
+                    //_cassandraRepository.CreateReservationsBatchAsync(reservationsCassandra)
                 );
 
                 allReservationIdsSQL = await _sqlServerRepository.GetAllReservationIdsAsync();
@@ -189,7 +192,7 @@ namespace DBSystemComparator_API.Services.Implementations
                     Guid serviceIdCassandra;
                     var now = DateTime.Now;
 
-                    if (allServiceIdsSQL.Count == allServiceIdsPG.Count) //&& allServiceIdsPG.Count == allServiceIdsMongo.Count && allServiceIdsMongo.Count == allServiceIdsCassandra.Count)
+                    if (allServiceIdsSQL.Count == allServiceIdsPG.Count)// && allServiceIdsPG.Count == allServiceIdsMongo.Count) && allServiceIdsMongo.Count == allServiceIdsCassandra.Count)
                     {
                         int idx = random.Next(allServiceIdsSQL.Count);
                         serviceIdSQL = allServiceIdsSQL[idx];
@@ -214,7 +217,7 @@ namespace DBSystemComparator_API.Services.Implementations
                 await Task.WhenAll(
                     _sqlServerRepository.CreateReservationsServicesBatchAsync(resServicesSQL),
                     _postgreSQLRepository.CreateReservationsServicesBatchAsync(resServicesPG)
-                    //_mongoDBRepository.CreateReservationsServicesBatchAsync(resServicesMongo),
+                    //_mongoDBRepository.CreateReservationsServicesBatchAsync(resServicesMongo)
                     //_cassandraRepository.CreateReservationsServicesBatchAsync(resServicesCassandra)
                 );
             }
@@ -242,12 +245,165 @@ namespace DBSystemComparator_API.Services.Implementations
                 await Task.WhenAll(
                     _sqlServerRepository.CreatePaymentsBatchAsync(paymentsSQL),
                     _postgreSQLRepository.CreatePaymentsBatchAsync(paymentsPG)
-                    //_mongoDBRepository.CreatePaymentsBatchAsync(paymentsMongo),
+                    //_mongoDBRepository.CreatePaymentsBatchAsync(paymentsMongo)
                     //_cassandraRepository.CreatePaymentsBatchAsync(paymentsCassandra)
                 );
             }
 
+            await ReplicateDataToMongoAsync();
+
             return new ResponseDTO(SUCCESS.DATA_HAS_BEEN_GENERATED);
+        }
+
+        private async Task ReplicateDataToMongoAsync()
+        {
+            await Task.WhenAll(
+                _mongoDBRepository.DeleteAllReservationsAsync(),
+                _mongoDBRepository.DeleteAllClientsAsync(),
+                _mongoDBRepository.DeleteAllRoomsAsync(),
+                _mongoDBRepository.DeleteAllServicesAsync()
+            );
+
+            var clientsTask = _postgreSQLRepository.GetAllClientsAsync();
+            var roomsTask = _postgreSQLRepository.GetAllRoomsAsync();
+            var servicesTask = _postgreSQLRepository.GetAllServicesAsync();
+            var reservationsTask = _postgreSQLRepository.GetAllReservationsAsync();
+            var reservationServicesTask = _postgreSQLRepository.GetAllReservationsServicesAsync();
+            var paymentsTask = _postgreSQLRepository.GetAllPaymentsAsync();
+
+            await Task.WhenAll(clientsTask, roomsTask, servicesTask, reservationsTask, reservationServicesTask, paymentsTask);
+
+            var clients = clientsTask.Result;
+            var rooms = roomsTask.Result;
+            var services = servicesTask.Result;
+            var reservations = reservationsTask.Result;
+            var reservationServices = reservationServicesTask.Result;
+            var payments = paymentsTask.Result;
+
+            var clientMap = clients.ToDictionary(c => c.Id, _ => ObjectId.GenerateNewId());
+            var roomMap = rooms.ToDictionary(r => r.Id, _ => ObjectId.GenerateNewId());
+            var serviceMap = services.ToDictionary(s => s.Id, _ => ObjectId.GenerateNewId());
+
+            var mongoClients = clients.Select(c => new ClientCollection
+            {
+                Id = clientMap[c.Id],
+                FirstName = c.FirstName,
+                SecondName = c.SecondName,
+                LastName = c.LastName,
+                Email = c.Email,
+                DateOfBirth = c.BirthDate,
+                Address = c.Address,
+                PhoneNumber = c.PhoneNumber,
+                IsActive = c.IsActive
+            }).ToList();
+
+            var mongoRooms = rooms.Select(r => new RoomCollection
+            {
+                Id = roomMap[r.Id],
+                Number = r.RoomNumber,
+                Capacity = r.Floor,
+                PricePerNight = r.Price,
+                IsActive = r.IsAvailable
+            }).ToList();
+
+            var mongoServices = services.Select(s => new Models.Collections.ServiceCollection
+            {
+                Id = serviceMap[s.Id],
+                Name = s.Name,
+                Price = s.Price,
+                IsActive = s.IsAvailable
+            }).ToList();
+
+            await Task.WhenAll(
+                _mongoDBRepository.CreateClientsBatchAsync(mongoClients),
+                _mongoDBRepository.CreateRoomsBatchAsync(mongoRooms),
+                _mongoDBRepository.CreateServicesBatchAsync(mongoServices)
+            );
+
+            var mongoClientDict = mongoClients.ToDictionary(c => c.Id);
+            var mongoRoomDict = mongoRooms.ToDictionary(r => r.Id);
+            var serviceDict = services.ToDictionary(s => s.Id);
+
+            var rsLookup = reservationServices.ToLookup(x => x.ReservationId, x => x.ServiceId);
+            var paymentLookup = payments.ToLookup(x => x.ReservationId, x => x);
+
+            const int batchSize = 10000;
+            int total = reservations.Count;
+            int processed = 0;
+
+            var reservationCollection = _mongoDBRepository.GetReservationCollectionRaw();
+
+            while (processed < total)
+            {
+                var batch = reservations.Skip(processed).Take(batchSize);
+                var bsonDocs = new List<BsonDocument>(batchSize);
+
+                Parallel.ForEach(batch, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, res =>
+                {
+                    var servicesBson = new BsonArray(
+                        rsLookup[res.Id].Select(sid =>
+                        {
+                            var s = serviceDict[sid];
+                            return new BsonDocument
+                            {
+                                { "serviceId", serviceMap[sid] },
+                                { "name", s.Name },
+                                { "price", s.Price }
+                            };
+                        })
+                    );
+
+                    var paymentsBson = new BsonArray(
+                        paymentLookup[res.Id].Select(p => new BsonDocument
+                        {
+                            { "paymentId", ObjectId.GenerateNewId() },
+                            { "description", p.Description },
+                            { "sum", p.Amount },
+                            { "creationDate", p.PaymentDate }
+                        })
+                    );
+
+                    var doc = new BsonDocument
+                    {
+                        { "_id", ObjectId.GenerateNewId() },
+                        { "client", new BsonDocument
+                            {
+                                { "_id", clientMap[res.ClientId] },
+                                { "firstName", mongoClientDict[clientMap[res.ClientId]].FirstName },
+                                { "secondName", mongoClientDict[clientMap[res.ClientId]].SecondName },
+                                { "lastName", mongoClientDict[clientMap[res.ClientId]].LastName },
+                                { "email", mongoClientDict[clientMap[res.ClientId]].Email },
+                                { "dateOfBirth", mongoClientDict[clientMap[res.ClientId]].DateOfBirth },
+                                { "address", mongoClientDict[clientMap[res.ClientId]].Address },
+                                { "phoneNumber", mongoClientDict[clientMap[res.ClientId]].PhoneNumber },
+                                { "isActive", mongoClientDict[clientMap[res.ClientId]].IsActive }
+                            }
+                        },
+                        { "room", new BsonDocument
+                            {
+                                { "_id", roomMap[res.RoomId] },
+                                { "number", mongoRoomDict[roomMap[res.RoomId]].Number },
+                                { "capacity", mongoRoomDict[roomMap[res.RoomId]].Capacity },
+                                { "pricePerNight", mongoRoomDict[roomMap[res.RoomId]].PricePerNight },
+                                { "isActive", mongoRoomDict[roomMap[res.RoomId]].IsActive }
+                            }
+                        },
+                        { "checkInDate", res.CheckInDate },
+                        { "checkOutDate", res.CheckOutDate },
+                        { "creationDate", res.CreationDate },
+                        { "services", servicesBson },
+                        { "payments", paymentsBson }
+                    };
+
+                    lock (bsonDocs)
+                    {
+                        bsonDocs.Add(doc);
+                    }
+                });
+
+                await reservationCollection.InsertManyAsync(bsonDocs, new MongoDB.Driver.InsertManyOptions { IsOrdered = false });
+                processed += bsonDocs.Count;
+            }
         }
     }
 }

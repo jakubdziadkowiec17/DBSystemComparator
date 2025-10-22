@@ -110,7 +110,7 @@ namespace DBSystemComparator_API.Constants
         public static readonly ScenarioDTO DELETE_2 = new ScenarioDTO
         {
             Id = 17,
-            Description = "Deleting payments not linked to any reservation.",
+            Description = "Deleting reservations not linked to any payment.",
             OperationId = (int)OPERATION.DELETE
         };
         public static readonly ScenarioDTO DELETE_3 = new ScenarioDTO
