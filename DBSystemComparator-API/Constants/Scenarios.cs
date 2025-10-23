@@ -40,13 +40,13 @@ namespace DBSystemComparator_API.Constants
         public static readonly ScenarioDTO READ_1 = new ScenarioDTO
         {
             Id = 6,
-            Description = "Selecting reservations with check-in dates after 2024 and sum above 4400.",
+            Description = "Selecting reservations with check-in dates after the second half of 2025.",
             OperationId = (int)OPERATION.READ
         };
         public static readonly ScenarioDTO READ_2 = new ScenarioDTO
         {
             Id = 7,
-            Description = "Selecting reservations with payments above a specified amount.",
+            Description = "Selecting reservations with payments above a specified amount above 4500.",
             OperationId = (int)OPERATION.READ
         };
         public static readonly ScenarioDTO READ_3 = new ScenarioDTO
@@ -58,13 +58,13 @@ namespace DBSystemComparator_API.Constants
         public static readonly ScenarioDTO READ_4 = new ScenarioDTO
         {
             Id = 9,
-            Description = "Selecting active services used in reservations.",
+            Description = "Selecting active services with price above 150 used in reservations .",
             OperationId = (int)OPERATION.READ
         };
         public static readonly ScenarioDTO READ_5 = new ScenarioDTO
         {
             Id = 10,
-            Description = "Selecting reservations for rooms above 7 capacity.",
+            Description = "Selecting reservations for rooms above 8 capacity.",
             OperationId = (int)OPERATION.READ
         };
 
@@ -72,31 +72,31 @@ namespace DBSystemComparator_API.Constants
         public static readonly ScenarioDTO UPDATE_1 = new ScenarioDTO
         {
             Id = 11,
-            Description = "Updating address and phone number for active clients.",
+            Description = "Updating address and phone number for active clients born after 2004.",
             OperationId = (int)OPERATION.UPDATE
         };
         public static readonly ScenarioDTO UPDATE_2 = new ScenarioDTO
         {
             Id = 12,
-            Description = "Increasing price (150) for rooms with minimum 2 capacity that have reservations.",
+            Description = "Increasing price (150) for rooms with minimum 9 capacity that have reservations.",
             OperationId = (int)OPERATION.UPDATE
         };
         public static readonly ScenarioDTO UPDATE_3 = new ScenarioDTO
         {
             Id = 13,
-            Description = "Increasing the price by 25 for active services by a specified amount.",
+            Description = "Increasing the price by 25 for active services for price above 180.",
             OperationId = (int)OPERATION.UPDATE
         };
         public static readonly ScenarioDTO UPDATE_4 = new ScenarioDTO
         {
             Id = 14,
-            Description = "Applying a discount 20% to inactive rooms.",
+            Description = "Applying a discount 20% to inactive rooms with price above 4400.",
             OperationId = (int)OPERATION.UPDATE
         };
         public static readonly ScenarioDTO UPDATE_5 = new ScenarioDTO
         {
             Id = 15,
-            Description = "Reducing room rates by 15 for upcoming bookings.",
+            Description = "Reducing room rates by 15 for reservations to april 2024.",
             OperationId = (int)OPERATION.UPDATE
         };
 
@@ -104,31 +104,31 @@ namespace DBSystemComparator_API.Constants
         public static readonly ScenarioDTO DELETE_1 = new ScenarioDTO
         {
             Id = 16,
-            Description = "Deleting payments for reservations before 2024.",
+            Description = "Deleting payments for reservations before march 2023.",
             OperationId = (int)OPERATION.DELETE
         };
         public static readonly ScenarioDTO DELETE_2 = new ScenarioDTO
         {
             Id = 17,
-            Description = "Deleting reservations not linked to any payment.",
+            Description = "Deleting payments with sum below 600.",
             OperationId = (int)OPERATION.DELETE
         };
         public static readonly ScenarioDTO DELETE_3 = new ScenarioDTO
         {
             Id = 18,
-            Description = "Deleting reservation-service links for reservations before 2024.",
+            Description = "Deleting reservation-service links for reservations before march 2023.",
             OperationId = (int)OPERATION.DELETE
         };
         public static readonly ScenarioDTO DELETE_4 = new ScenarioDTO
         {
             Id = 19,
-            Description = "Deleting reservation-service rows for services below the price of 100.",
+            Description = "Deleting reservation-service rows for services below the price of 20.",
             OperationId = (int)OPERATION.DELETE
         };
         public static readonly ScenarioDTO DELETE_5 = new ScenarioDTO
         {
             Id = 20,
-            Description = "Deleting services not linked to any reservation.",
+            Description = "Deleting services below 30 and not linked to any reservation.",
             OperationId = (int)OPERATION.DELETE
         };
 

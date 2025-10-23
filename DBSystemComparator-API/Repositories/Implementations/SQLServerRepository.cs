@@ -101,7 +101,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
         // READ
 
-        public Task<List<Dictionary<string, object>>> ReadReservationsAfter2024Async()
+        public Task<List<Dictionary<string, object>>> ReadReservationsAfterSecondHalf2025Async()
         {
             var sql = @"
                 SELECT r.Id AS ReservationId, r.CheckInDate, r.CheckOutDate, c.FirstName, c.LastName
@@ -111,7 +111,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
             var parameters = new Dictionary<string, object>
             {
-                { "@CheckInThreshold", new DateTime(2024, 1, 1) }
+                { "@CheckInThreshold", new DateTime(2025, 06, 30) }
             };
 
             return ExecuteQueryAsync(sql, parameters);
@@ -145,17 +145,18 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteQueryAsync(sql);
         }
 
-        public Task<List<Dictionary<string, object>>> ReadActiveServicesUsedInReservationsAsync()
+        public Task<List<Dictionary<string, object>>> ReadActiveServicesUsedInReservationsAsync(int minSum)
         {
             var sql = @"
                 SELECT DISTINCT s.Id AS ServiceId, s.Name, s.Price
                 FROM Services s
                 JOIN ReservationsServices rs ON s.Id = rs.ServiceId
-                WHERE s.IsActive = @IsActive";
+                WHERE s.IsActive = @IsActive AND s.Price > @MinSum";
 
             var parameters = new Dictionary<string, object>
             {
-                { "@IsActive", 1 }
+                { "@IsActive", 1 },
+                { "@MinSum", minSum }
             };
 
             return ExecuteQueryAsync(sql, parameters);
@@ -180,17 +181,18 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
         // UPDATE
 
-        public Task<int> UpdateClientsAddressAndPhoneAsync(bool isActive)
+        public Task<int> UpdateClientsAddressAndPhoneAsync(bool isActive, DateTime dateThreshold)
         {
             var sql = @"
                 UPDATE Clients
                 SET Address = 'Cracow, ul. abc 4',
                     PhoneNumber = '123456789'
-                WHERE Id IN (SELECT Id FROM Clients WHERE IsActive = @IsActive)";
+                WHERE IsActive = @IsActive AND DateOfBirth > @DateOfBirth";
 
                     var parameters = new Dictionary<string, object>
                     {
-                        { "@IsActive", isActive ? 1 : 0 }
+                        { "@IsActive", isActive ? 1 : 0 },
+                        { "@DateOfBirth", dateThreshold }
                     };
 
             return ExecuteNonQueryAsync(sql, parameters);
@@ -213,39 +215,41 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdateServicesPriceAsync(int priceIncrement, bool isActive)
+        public Task<int> UpdateServicesPriceAsync(int priceIncrement, bool isActive, int price)
         {
             var sql = @"
                 UPDATE Services
                 SET Price = Price + @PriceIncrement
-                WHERE IsActive = @IsActive";
+                WHERE IsActive = @IsActive AND Price > @Price";
             
             var parameters = new Dictionary<string, object>
             {
                 { "@PriceIncrement", priceIncrement },
-                { "@IsActive", isActive ? 1 : 0 }
+                { "@IsActive", isActive ? 1 : 0 },
+                { "@Price", price }
             };
 
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdatePriceForInactiveRoomsAsync(double discountMultiplier)
+        public Task<int> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, int pricePerNight)
         {
             var sql = @"
                 UPDATE Rooms
                 SET PricePerNight = PricePerNight * @DiscountMultiplier
-                WHERE IsActive = @IsActive";
+                WHERE IsActive = @IsActive AND PricePerNight > @PricePerNight";
 
             var parameters = new Dictionary<string, object>
             {
                 { "@DiscountMultiplier", discountMultiplier },
-                { "@IsActive", 0 }
+                { "@IsActive", 0 },
+                { "@PricePerNight", pricePerNight }
             };
 
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdateRoomsPriceForReservationsTo2024Async(int priceDecrement)
+        public Task<int> UpdateRoomsPriceForReservationsToApril2024Async(int priceDecrement)
         {
             var sql = @"
                 UPDATE Rooms
@@ -253,7 +257,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 WHERE Id IN (
                     SELECT RoomId
                     FROM Reservations
-                    WHERE CheckInDate < '2024-01-01'
+                    WHERE CheckInDate < '2023-04-01'
                 )";
             
             var parameters = new Dictionary<string, object>
@@ -266,36 +270,40 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
         // DELETE
 
-        public Task<int> DeletePaymentsOlderThan2024Async()
+        public Task<int> DeletePaymentsOlderThanMarch2024Async()
         {
-            var sql = @"DELETE FROM Payments WHERE ReservationId IN (SELECT Id FROM Reservations WHERE CheckInDate < '2024-01-01')";
+            var sql = @"DELETE FROM Payments WHERE ReservationId IN (SELECT Id FROM Reservations WHERE CheckInDate < '2023-03-01')";
             return ExecuteNonQueryAsync(sql);
         }
 
-        public Task<int> DeleteReservationsWithoutPaymentAsync()
+        public Task<int> DeletePaymentsToSumAsync(int sum)
         {
-            var sql = @"DELETE FROM Reservations WHERE Id NOT IN (SELECT ReservationId FROM Payments)";
-            return ExecuteNonQueryAsync(sql);
+            var sql = @"DELETE FROM Payments WHERE Sum < @Sum";
+            var parameters = new Dictionary<string, object> { { "@Sum", sum } };
+
+            return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> DeleteReservationsServicesOlderThan2024Async()
+        public Task<int> DeleteReservationsServicesOlderThanMarch2023Async()
         {
-            var sql = @"DELETE FROM ReservationsServices WHERE ReservationId IN (SELECT Id FROM Reservations WHERE CheckInDate < '2024-01-01')";
+            var sql = @"DELETE FROM ReservationsServices WHERE ReservationId IN (SELECT Id FROM Reservations WHERE CheckInDate < '2023-03-01')";
             return ExecuteNonQueryAsync(sql);
         }
 
         public Task<int> DeleteReservationsServicesWithServicePriceBelowAsync(int price)
         {
-            var sql = @"DELETE FROM ReservationsServices WHERE ServiceId IN (SELECT Id FROM Services WHERE Price < @price)";
-            var parameters = new Dictionary<string, object> { { "@price", price } };
+            var sql = @"DELETE FROM ReservationsServices WHERE ServiceId IN (SELECT Id FROM Services WHERE Price < @Price)";
+            var parameters = new Dictionary<string, object> { { "@Price", price } };
 
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> DeleteUnusedServicesAsync()
+        public Task<int> DeleteUnusedServicesPriceBelowAsync(int price)
         {
-            var sql = @"DELETE FROM Services WHERE Id NOT IN (SELECT DISTINCT ServiceId FROM ReservationsServices)";
-            return ExecuteNonQueryAsync(sql);
+            var sql = @"DELETE FROM Services WHERE Price < @Price AND Id NOT IN (SELECT DISTINCT ServiceId FROM ReservationsServices)";
+            var parameters = new Dictionary<string, object> { { "@Price", price } };
+
+            return ExecuteNonQueryAsync(sql, parameters);
         }
 
         // HELPERS

@@ -162,37 +162,37 @@ namespace DBSystemComparator_API.Services.Implementations
             else if (selectedScenario.Id == SCENARIOS.READ_1.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.ReadReservationsAfter2024Async(),
+                    async () => await _postgreSQLRepository.ReadReservationsAfterSecondHalf2025Async(),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.ReadReservationsAfter2024Async(),
+                    async () => await _sqlServerRepository.ReadReservationsAfterSecondHalf2025Async(),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.ReadReservationsAfter2024Async(),
+                    async () => await _mongoDBRepository.ReadReservationsAfterSecondHalf2025Async(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.ReadReservationsAfter2024Async(),
+                //    async () => await _cassandraRepository.ReadReservationsAfterSecondHalf2025Async(),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.READ_2.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.ReadReservationsWithPaymentsAboveAsync(4400),
+                    async () => await _postgreSQLRepository.ReadReservationsWithPaymentsAboveAsync(4500),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.ReadReservationsWithPaymentsAboveAsync(4400),
+                    async () => await _sqlServerRepository.ReadReservationsWithPaymentsAboveAsync(4500),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.ReadReservationsWithPaymentsAboveAsync(4400),
+                    async () => await _mongoDBRepository.ReadReservationsWithPaymentsAboveAsync(4500),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.ReadReservationsWithPaymentsAboveAsync(4400),
+                //    async () => await _cassandraRepository.ReadReservationsWithPaymentsAboveAsync(4500),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.READ_3.Id)
@@ -216,219 +216,219 @@ namespace DBSystemComparator_API.Services.Implementations
             else if (selectedScenario.Id == SCENARIOS.READ_4.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.ReadActiveServicesUsedInReservationsAsync(),
+                    async () => await _postgreSQLRepository.ReadActiveServicesUsedInReservationsAsync(150),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.ReadActiveServicesUsedInReservationsAsync(),
+                    async () => await _sqlServerRepository.ReadActiveServicesUsedInReservationsAsync(150),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.ReadActiveServicesUsedInReservationsAsync(),
+                    async () => await _mongoDBRepository.ReadActiveServicesUsedInReservationsAsync(150),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.ReadActiveServicesUsedInReservationsAsync(),
+                //    async () => await _cassandraRepository.ReadActiveServicesUsedInReservationsAsync(150),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.READ_5.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.ReadCapacityReservationsAsync(7),
+                    async () => await _postgreSQLRepository.ReadCapacityReservationsAsync(8),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.ReadCapacityReservationsAsync(7),
+                    async () => await _sqlServerRepository.ReadCapacityReservationsAsync(8),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.ReadCapacityReservationsAsync(7),
+                    async () => await _mongoDBRepository.ReadCapacityReservationsAsync(8),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.ReadCapacityReservationsAsync(7),
+                //    async () => await _cassandraRepository.ReadCapacityReservationsAsync(8),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             // UPDATE
             else if (selectedScenario.Id == SCENARIOS.UPDATE_1.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.UpdateClientsAddressAndPhoneAsync(true),
+                    async () => await _postgreSQLRepository.UpdateClientsAddressAndPhoneAsync(true, new DateTime(2004, 12, 31)),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.UpdateClientsAddressAndPhoneAsync(true),
+                    async () => await _sqlServerRepository.UpdateClientsAddressAndPhoneAsync(true, new DateTime(2004, 12, 31)),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.UpdateClientsAddressAndPhoneAsync(true),
+                    async () => await _mongoDBRepository.UpdateClientsAddressAndPhoneAsync(true, new DateTime(2004, 12, 31)),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.UpdateClientsAddressAndPhoneAsync(true),
+                //    async () => await _cassandraRepository.UpdateClientsAddressAndPhoneAsync(true, new DateTime(2004, 12, 31)),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.UPDATE_2.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.UpdateRoomsPriceForReservationsAsync(2, 150),
+                    async () => await _postgreSQLRepository.UpdateRoomsPriceForReservationsAsync(9, 150),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.UpdateRoomsPriceForReservationsAsync(2, 150),
+                    async () => await _sqlServerRepository.UpdateRoomsPriceForReservationsAsync(9, 150),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.UpdateRoomsPriceForReservationsAsync(2, 150),
+                    async () => await _mongoDBRepository.UpdateRoomsPriceForReservationsAsync(9, 150),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.UpdateRoomsPriceForReservationsAsync(2, 150),
+                //    async () => await _cassandraRepository.UpdateRoomsPriceForReservationsAsync(9, 150),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.UPDATE_3.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.UpdateServicesPriceAsync(25, true),
+                    async () => await _postgreSQLRepository.UpdateServicesPriceAsync(25, true, 180),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.UpdateServicesPriceAsync(25, true),
+                    async () => await _sqlServerRepository.UpdateServicesPriceAsync(25, true, 180),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.UpdateServicesPriceAsync(25, true),
+                    async () => await _mongoDBRepository.UpdateServicesPriceAsync(25, true, 180),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.UpdateServicesPriceAsync(25, true),
+                //    async () => await _cassandraRepository.UpdateServicesPriceAsync(25, true, 180),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.UPDATE_4.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.UpdatePriceForInactiveRoomsAsync(0.8),
+                    async () => await _postgreSQLRepository.UpdatePriceForInactiveRoomsAsync(0.8, 4400),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.UpdatePriceForInactiveRoomsAsync(0.8),
+                    async () => await _sqlServerRepository.UpdatePriceForInactiveRoomsAsync(0.8, 4400),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.UpdatePriceForInactiveRoomsAsync(0.8),
+                    async () => await _mongoDBRepository.UpdatePriceForInactiveRoomsAsync(0.8, 4400),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.UpdatePriceForInactiveRoomsAsync(0.8),
+                //    async () => await _cassandraRepository.UpdatePriceForInactiveRoomsAsync(0.8, 4400),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.UPDATE_5.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.UpdateRoomsPriceForReservationsTo2024Async(15),
+                    async () => await _postgreSQLRepository.UpdateRoomsPriceForReservationsToApril2024Async(15),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.UpdateRoomsPriceForReservationsTo2024Async(15),
+                    async () => await _sqlServerRepository.UpdateRoomsPriceForReservationsToApril2024Async(15),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.UpdateRoomsPriceForReservationsTo2024Async(15),
+                    async () => await _mongoDBRepository.UpdateRoomsPriceForReservationsToApril2024Async(15),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.UpdateRoomsPriceForReservationsTo2024Async(15),
+                //    async () => await _cassandraRepository.UpdateRoomsPriceForReservationsToApril2024Async(15),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             // DELETE
             else if (selectedScenario.Id == SCENARIOS.DELETE_1.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.DeletePaymentsOlderThan2024Async(),
+                    async () => await _postgreSQLRepository.DeletePaymentsOlderThanMarch2024Async(),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.DeletePaymentsOlderThan2024Async(),
+                    async () => await _sqlServerRepository.DeletePaymentsOlderThanMarch2024Async(),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.DeletePaymentsOlderThan2024Async(),
+                    async () => await _mongoDBRepository.DeletePaymentsOlderThanMarch2024Async(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.DeletePaymentsOlderThan2024Async(),
+                //    async () => await _cassandraRepository.DeletePaymentsOlderThanMarch2024Async(),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.DELETE_2.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.DeleteReservationsWithoutPaymentAsync(),
+                    async () => await _postgreSQLRepository.DeletePaymentsToSumAsync(600),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.DeleteReservationsWithoutPaymentAsync(),
+                    async () => await _sqlServerRepository.DeletePaymentsToSumAsync(600),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.DeleteReservationsWithoutPaymentAsync(),
+                    async () => await _mongoDBRepository.DeletePaymentsToSumAsync(600),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.DeleteReservationsWithoutPaymentAsync(),
+                //    async () => await _cassandraRepository.DeletePaymentsToSumAsync(600),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.DELETE_3.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.DeleteReservationsServicesOlderThan2024Async(),
+                    async () => await _postgreSQLRepository.DeleteReservationsServicesOlderThanMarch2023Async(),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.DeleteReservationsServicesOlderThan2024Async(),
+                    async () => await _sqlServerRepository.DeleteReservationsServicesOlderThanMarch2023Async(),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.DeleteReservationsServicesOlderThan2024Async(),
+                    async () => await _mongoDBRepository.DeleteReservationsServicesOlderThanMarch2023Async(),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.DeleteReservationsServicesOlderThan2024Async(),
+                //    async () => await _cassandraRepository.DeleteReservationsServicesOlderThanMarch2023Async(),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.DELETE_4.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.DeleteReservationsServicesWithServicePriceBelowAsync(100),
+                    async () => await _postgreSQLRepository.DeleteReservationsServicesWithServicePriceBelowAsync(20),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.DeleteReservationsServicesWithServicePriceBelowAsync(100),
+                    async () => await _sqlServerRepository.DeleteReservationsServicesWithServicePriceBelowAsync(20),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.DeleteReservationsServicesWithServicePriceBelowAsync(100),
+                    async () => await _mongoDBRepository.DeleteReservationsServicesWithServicePriceBelowAsync(20),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.DeleteReservationsServicesWithServicePriceBelowAsync(100),
+                //    async () => await _cassandraRepository.DeleteReservationsServicesWithServicePriceBelowAsync(20),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
             else if (selectedScenario.Id == SCENARIOS.DELETE_5.Id)
             {
                 await GetMetricsAsync(
-                    async () => await _postgreSQLRepository.DeleteUnusedServicesAsync(),
+                    async () => await _postgreSQLRepository.DeleteUnusedServicesPriceBelowAsync(30),
                     time_postgreSQL, ramUsage_postgreSQL, cpuUsage_postgreSQL);
 
                 await GetMetricsAsync(
-                    async () => await _sqlServerRepository.DeleteUnusedServicesAsync(),
+                    async () => await _sqlServerRepository.DeleteUnusedServicesPriceBelowAsync(30),
                     time_sqlServer, ramUsage_sqlServer, cpuUsage_sqlServer);
 
                 await GetMetricsAsync(
-                    async () => await _mongoDBRepository.DeleteUnusedServicesAsync(),
+                    async () => await _mongoDBRepository.DeleteUnusedServicesPriceBelowAsync(30),
                     time_mongoDB, ramUsage_mongoDB, cpuUsage_mongoDB);
 
                 //await GetMetricsAsync(
-                //    async () => await _cassandraRepository.DeleteUnusedServicesAsync(),
+                //    async () => await _cassandraRepository.DeleteUnusedServicesPriceBelowAsync(30),
                 //    time_cassandra, ramUsage_cassandra, cpuUsage_cassandra);
             }
 
