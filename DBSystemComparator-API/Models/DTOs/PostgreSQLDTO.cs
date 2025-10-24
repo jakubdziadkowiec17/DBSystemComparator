@@ -18,7 +18,7 @@
         public int Id;
         public int RoomNumber;
         public int Floor;
-        public int Price;
+        public double Price;
         public bool IsAvailable;
     }
     

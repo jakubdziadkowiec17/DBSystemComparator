@@ -35,7 +35,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return client.Id.ToString();
         }
 
-        public async Task<string> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive)
+        public async Task<string> CreateRoomAsync(int number, int capacity, double pricePerNight, bool isActive)
         {
             var room = new RoomCollection
             {
@@ -79,7 +79,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return clients.Select(c => c.Id.ToString()).ToList();
         }
 
-        public async Task<List<string>> CreateRoomsAsync(int number, int capacity, int pricePerNight, bool isActive, int count)
+        public async Task<List<string>> CreateRoomsAsync(int number, int capacity, double pricePerNight, bool isActive, int count)
         {
             var rooms = Enumerable.Range(0, count)
                 .Select(_ => new RoomCollection
@@ -280,7 +280,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return svcResult.ModifiedCount;
         }
 
-        public async Task<long> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, int pricePerNight)
+        public async Task<long> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, double pricePerNight)
         {
             var filterRooms = Builders<RoomCollection>.Filter.And(
                 Builders<RoomCollection>.Filter.Eq(r => r.IsActive, false),

@@ -81,7 +81,7 @@ namespace DBSystemComparator_API.Services.Implementations
                 int batchEnd = Math.Min(batchStart + batchSize - 1, generateDataDTO.Count);
 
                 var clientsBatch = new List<(string, string, string, string, DateTime, string, string, bool)>();
-                var roomsBatch = new List<(int, int, int, bool)>();
+                var roomsBatch = new List<(int, int, double, bool)>();
                 var servicesBatch = new List<(string, int, bool)>();
 
                 for (int i = batchStart; i <= batchEnd; i++)

@@ -12,7 +12,7 @@ namespace DBSystemComparator_API.Models.Collections
         [BsonElement("capacity")]
         public int Capacity { get; set; }
         [BsonElement("pricePerNight")]
-        public int PricePerNight { get; set; }
+        public double PricePerNight { get; set; }
         [BsonElement("isActive")]
         public bool IsActive { get; set; }
     }

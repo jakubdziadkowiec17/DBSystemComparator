@@ -10,10 +10,10 @@ namespace DBSystemComparator_API.Repositories.Interfaces
     {
         // CREATE
         Task<string> CreateClientAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive);
-        Task<string> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive);
+        Task<string> CreateRoomAsync(int number, int capacity, double pricePerNight, bool isActive);
         Task<string> CreateServiceAsync(string name, int price, bool isActive);
         Task<List<string>> CreateClientsAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive, int count);
-        Task<List<string>> CreateRoomsAsync(int number, int capacity, int pricePerNight, bool isActive, int count);
+        Task<List<string>> CreateRoomsAsync(int number, int capacity, double pricePerNight, bool isActive, int count);
         // READ
         Task<List<Dictionary<string, object>>> ReadReservationsAfterSecondHalf2025Async();
         Task<List<Dictionary<string, object>>> ReadReservationsWithPaymentsAboveAsync(int minSum);
@@ -24,7 +24,7 @@ namespace DBSystemComparator_API.Repositories.Interfaces
         Task<long> UpdateClientsAddressAndPhoneAsync(bool isActive, DateTime dateThreshold);
         Task<long> UpdateRoomsPriceForReservationsAsync(int minCapacity, int priceIncrement);
         Task<long> UpdateServicesPriceAsync(int priceIncrement, bool isActive, int price);
-        Task<long> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, int pricePerNight);
+        Task<long> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, double pricePerNight);
         Task<long> UpdateRoomsPriceForReservationsToApril2024Async(int priceDecrement);
         // DELETE
         Task<long> DeletePaymentsOlderThanMarch2024Async();

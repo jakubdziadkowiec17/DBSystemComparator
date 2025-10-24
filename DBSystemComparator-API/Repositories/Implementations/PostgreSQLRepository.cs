@@ -36,7 +36,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
-        public Task<int> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive)
+        public Task<int> CreateRoomAsync(int number, int capacity, double pricePerNight, bool isActive)
         {
             var sql = @"
                 INSERT INTO rooms (number, capacity, pricepernight, isactive)
@@ -81,7 +81,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return results.ToList();
         }
 
-        public async Task<List<int>> CreateRoomsAsync(int number, int capacity, int pricePerNight, bool isActive, int count)
+        public async Task<List<int>> CreateRoomsAsync(int number, int capacity, double pricePerNight, bool isActive, int count)
         {
             var tasks = new List<Task<int>>();
             for (int i = 0; i < count; i++)
@@ -204,7 +204,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, int pricePerNight)
+        public Task<int> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, double pricePerNight)
         {
             var sql = @"
                 UPDATE rooms
@@ -290,7 +290,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             await writer.CompleteAsync();
         }
 
-        public async Task CreateRoomsBatchAsync(IEnumerable<(int number, int capacity, int pricePerNight, bool isActive)> rooms)
+        public async Task CreateRoomsBatchAsync(IEnumerable<(int number, int capacity, double pricePerNight, bool isActive)> rooms)
         {
             await using var connection = new NpgsqlConnection(_connectionString);
             await connection.OpenAsync();
@@ -509,7 +509,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                     Id = reader.GetInt32(0),
                     RoomNumber = reader.GetInt32(1),
                     Floor = reader.GetInt32(2),
-                    Price = reader.GetInt32(3),
+                    Price = reader.GetDouble(3),
                     IsAvailable = reader.GetBoolean(4)
                 });
             }

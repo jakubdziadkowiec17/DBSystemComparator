@@ -47,7 +47,7 @@ namespace DBSystemComparator_API.Database
                     Id SERIAL PRIMARY KEY,
                     Number INT NOT NULL,
                     Capacity INT NOT NULL,
-                    PricePerNight INT NOT NULL,
+                    PricePerNight DOUBLE PRECISION NOT NULL,
                     IsActive BOOLEAN NOT NULL
                 );",
 

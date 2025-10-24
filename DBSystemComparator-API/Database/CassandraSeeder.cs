@@ -39,7 +39,7 @@ namespace DBSystemComparator_API.Database
                     id uuid PRIMARY KEY,
                     number int,
                     capacity int,
-                    pricepernight int,
+                    pricepernight double,
                     isactive boolean
                 );
             "));
@@ -50,7 +50,7 @@ namespace DBSystemComparator_API.Database
                     id uuid,
                     number int,
                     capacity int,
-                    pricepernight int,
+                    pricepernight double,
                     PRIMARY KEY (isactive, id)
                 );
             "));

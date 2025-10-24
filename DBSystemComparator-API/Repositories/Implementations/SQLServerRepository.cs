@@ -38,7 +38,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
-        public Task<int> CreateRoomAsync(int number, int capacity, int pricePerNight, bool isActive)
+        public Task<int> CreateRoomAsync(int number, int capacity, double pricePerNight, bool isActive)
         {
             var sql = @"
                 INSERT INTO Rooms (Number, Capacity, PricePerNight, IsActive)
@@ -86,7 +86,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return results.ToList();
         }
 
-        public async Task<List<int>> CreateRoomsAsync(int number, int capacity, int pricePerNight, bool isActive, int count)
+        public async Task<List<int>> CreateRoomsAsync(int number, int capacity, double pricePerNight, bool isActive, int count)
         {
             var tasks = new List<Task<int>>();
 
@@ -232,7 +232,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, int pricePerNight)
+        public Task<int> UpdatePriceForInactiveRoomsAsync(double discountMultiplier, double pricePerNight)
         {
             var sql = @"
                 UPDATE Rooms
@@ -342,7 +342,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
             await bulk.WriteToServerAsync(dt);
         }
 
-        public async Task CreateRoomsBatchAsync(List<(int number, int capacity, int pricePerNight, bool isActive)> rooms)
+        public async Task CreateRoomsBatchAsync(List<(int number, int capacity, double pricePerNight, bool isActive)> rooms)
         {
             var dt = new DataTable();
             dt.Columns.Add("Number", typeof(int));

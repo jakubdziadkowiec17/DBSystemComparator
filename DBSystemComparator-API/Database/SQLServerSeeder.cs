@@ -48,7 +48,7 @@ namespace DBSystemComparator_API.Database
                       Id INT IDENTITY PRIMARY KEY,
                       Number INT NOT NULL,
                       Capacity INT NOT NULL,
-                      PricePerNight INT NOT NULL,
+                      PricePerNight DECIMAL(18,2) NOT NULL,
                       IsActive BIT NOT NULL
                   );",
 

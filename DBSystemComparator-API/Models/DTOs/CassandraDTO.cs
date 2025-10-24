@@ -30,7 +30,7 @@
         public Guid Id { get; set; }
         public int Number { get; set; }
         public int Capacity { get; set; }
-        public int PricePerNight { get; set; }
+        public double PricePerNight { get; set; }
         public bool IsActive { get; set; }
     }
 
@@ -40,7 +40,7 @@
         public bool IsActive { get; set; }
         public int Number { get; set; }
         public int Capacity { get; set; }
-        public int PricePerNight { get; set; }
+        public double PricePerNight { get; set; }
     }
 
     public class CassandraServiceDTO
