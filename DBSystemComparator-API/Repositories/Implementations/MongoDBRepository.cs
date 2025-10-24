@@ -139,7 +139,6 @@ namespace DBSystemComparator_API.Repositories.Implementations
         public async Task<List<Dictionary<string, object>>> ReadClientsWithActiveReservationsAsync()
         {
             var filter = Builders<ReservationCollection>.Filter.Or(
-                Builders<ReservationCollection>.Filter.Eq(r => r.CheckOutDate, null),
                 Builders<ReservationCollection>.Filter.Gte(r => r.CheckOutDate, DateTime.Now)
             );
 

@@ -6,7 +6,6 @@ namespace DBSystemComparator_API.Database
     {
         public static async Task CreateTablesAsync(Cassandra.ISession session)
         {
-            // --- Clients (mała tabela, dostęp po id) ---
             await session.ExecuteAsync(new SimpleStatement(@"
                 CREATE TABLE IF NOT EXISTS clients (
                     id uuid PRIMARY KEY,
@@ -21,20 +20,20 @@ namespace DBSystemComparator_API.Database
                 );
             "));
 
-            // --- Active clients (dla szybkich zapytań o aktywnych) ---
             await session.ExecuteAsync(new SimpleStatement(@"
-                CREATE TABLE IF NOT EXISTS active_clients (
-                    id uuid PRIMARY KEY,
+                CREATE TABLE IF NOT EXISTS active_clients_by_status (
+                    isactive boolean,
+                    id uuid,
                     firstname text,
                     lastname text,
                     email text,
                     dateofbirth timestamp,
                     address text,
-                    phonenumber text
+                    phonenumber text,
+                    PRIMARY KEY (isactive, id)
                 );
             "));
 
-            // --- Rooms ---
             await session.ExecuteAsync(new SimpleStatement(@"
                 CREATE TABLE IF NOT EXISTS rooms (
                     id uuid PRIMARY KEY,
@@ -45,17 +44,17 @@ namespace DBSystemComparator_API.Database
                 );
             "));
 
-            // --- Active Rooms ---
             await session.ExecuteAsync(new SimpleStatement(@"
-                CREATE TABLE IF NOT EXISTS active_rooms (
-                    id uuid PRIMARY KEY,
+                CREATE TABLE IF NOT EXISTS active_rooms_by_status (
+                    isactive boolean,
+                    id uuid,
                     number int,
                     capacity int,
-                    pricepernight int
+                    pricepernight int,
+                    PRIMARY KEY (isactive, id)
                 );
             "));
 
-            // --- Services ---
             await session.ExecuteAsync(new SimpleStatement(@"
                 CREATE TABLE IF NOT EXISTS services (
                     id uuid PRIMARY KEY,
@@ -65,56 +64,53 @@ namespace DBSystemComparator_API.Database
                 );
             "));
 
-            // --- Active Services ---
             await session.ExecuteAsync(new SimpleStatement(@"
-                CREATE TABLE IF NOT EXISTS active_services (
-                    id uuid PRIMARY KEY,
+                CREATE TABLE IF NOT EXISTS active_services_by_price (
+                    isactive boolean,
+                    price int,
+                    id uuid,
                     name text,
-                    price int
-                );
+                    PRIMARY KEY (isactive, price, id)
+                ) WITH CLUSTERING ORDER BY (price DESC);
             "));
 
-            // --- Reservations by Client (pod zapytania: wszystkie rezerwacje klienta) ---
             await session.ExecuteAsync(new SimpleStatement(@"
                 CREATE TABLE IF NOT EXISTS reservations_by_client (
                     clientid uuid,
+                    creationdate timestamp,
                     reservationid uuid,
                     roomid uuid,
                     checkindate timestamp,
                     checkoutdate timestamp,
-                    creationdate timestamp,
-                    PRIMARY KEY (clientid, reservationid)
-                ) WITH CLUSTERING ORDER BY (reservationid DESC);
+                    PRIMARY KEY (clientid, creationdate, reservationid)
+                ) WITH CLUSTERING ORDER BY (creationdate DESC);
             "));
 
-            // --- Reservations by Room (pod zapytania: wszystkie rezerwacje pokoju) ---
             await session.ExecuteAsync(new SimpleStatement(@"
                 CREATE TABLE IF NOT EXISTS reservations_by_room (
                     roomid uuid,
+                    creationdate timestamp,
                     reservationid uuid,
                     clientid uuid,
                     checkindate timestamp,
                     checkoutdate timestamp,
-                    creationdate timestamp,
-                    PRIMARY KEY (roomid, reservationid)
-                ) WITH CLUSTERING ORDER BY (reservationid DESC);
+                    PRIMARY KEY (roomid, creationdate, reservationid)
+                ) WITH CLUSTERING ORDER BY (creationdate DESC);
             "));
 
-            // --- Payments by Reservation (pod zapytania: płatności danej rezerwacji) ---
             await session.ExecuteAsync(new SimpleStatement(@"
                 CREATE TABLE IF NOT EXISTS payments_by_reservation (
                     reservationid uuid,
+                    creationdate timestamp,
                     paymentid uuid,
                     description text,
                     sum int,
-                    creationdate timestamp,
-                    PRIMARY KEY (reservationid, paymentid)
-                ) WITH CLUSTERING ORDER BY (paymentid DESC);
+                    PRIMARY KEY (reservationid, creationdate, paymentid)
+                ) WITH CLUSTERING ORDER BY (creationdate DESC);
             "));
 
-            // --- ReservationsServices by Reservation ---
             await session.ExecuteAsync(new SimpleStatement(@"
-                CREATE TABLE IF NOT EXISTS reservationsservices_by_reservation (
+                CREATE TABLE IF NOT EXISTS reservations_services_by_reservation (
                     reservationid uuid,
                     serviceid uuid,
                     creationdate timestamp,
@@ -122,9 +118,8 @@ namespace DBSystemComparator_API.Database
                 );
             "));
 
-            // --- ReservationsServices by Service (np. wszystkie rezerwacje z daną usługą) ---
             await session.ExecuteAsync(new SimpleStatement(@"
-                CREATE TABLE IF NOT EXISTS reservationsservices_by_service (
+                CREATE TABLE IF NOT EXISTS reservations_services_by_service (
                     serviceid uuid,
                     reservationid uuid,
                     creationdate timestamp,

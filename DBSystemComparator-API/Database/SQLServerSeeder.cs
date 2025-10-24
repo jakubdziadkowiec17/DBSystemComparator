@@ -68,7 +68,7 @@ namespace DBSystemComparator_API.Database
                       ClientId INT NOT NULL,
                       RoomId INT NOT NULL,
                       CheckInDate DATETIME2 NOT NULL,
-                      CheckOutDate DATETIME2 NULL,
+                      CheckOutDate DATETIME2 NOT NULL,
                       CreationDate DATETIME2 NOT NULL,
                       CONSTRAINT FK_Reservations_Clients FOREIGN KEY (ClientId) REFERENCES Clients(Id) ON DELETE CASCADE,
                       CONSTRAINT FK_Reservations_Rooms FOREIGN KEY (RoomId) REFERENCES Rooms(Id) ON DELETE CASCADE

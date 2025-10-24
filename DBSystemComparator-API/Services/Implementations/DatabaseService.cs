@@ -4,6 +4,7 @@ using DBSystemComparator_API.Models.DTOs;
 using DBSystemComparator_API.Repositories.Interfaces;
 using DBSystemComparator_API.Services.Interfaces;
 using MongoDB.Bson;
+using static DBSystemComparator_API.Repositories.Implementations.PostgreSQLRepository;
 
 namespace DBSystemComparator_API.Services.Implementations
 {
@@ -26,14 +27,14 @@ namespace DBSystemComparator_API.Services.Implementations
             var tablesCountForPostgreSQL = await _postgreSQLRepository.GetTablesCountAsync();
             var tablesCountForSQLServer = await _sqlServerRepository.GetTablesCountAsync();
             var tablesCountForMongoDB = await _mongoDBRepository.GetTablesCountAsync();
-            //var tablesCountForCassandra = await _cassandraRepository.GetTablesCountAsync();
+            var tablesCountForCassandra = await _cassandraRepository.GetTablesCountAsync();
 
             return new DataCountDTO()
             {
                 PostgreSQL = tablesCountForPostgreSQL,
                 SQLServer = tablesCountForSQLServer,
                 MongoDB = tablesCountForMongoDB,
-                Cassandra = tablesCountForSQLServer,//////////////////
+                Cassandra = tablesCountForCassandra
             };
         }
 
@@ -41,6 +42,7 @@ namespace DBSystemComparator_API.Services.Implementations
         {
             await GenerateDataToSQLServerAndPostgreSQLAsync(generateDataDTO);
             await GenerateDataToMongoDBAsync();
+            await GenerateDataToCassandraAsync();
 
             return new ResponseDTO(SUCCESS.DATA_HAS_BEEN_GENERATED);
         }
@@ -349,6 +351,143 @@ namespace DBSystemComparator_API.Services.Implementations
                 await reservationCollection.InsertManyAsync(bsonDocs, new MongoDB.Driver.InsertManyOptions { IsOrdered = false });
                 processed += bsonDocs.Count;
             }
+        }
+
+        private async Task GenerateDataToCassandraAsync()
+        {
+            await _cassandraRepository.DeleteAllAsync();
+
+            var clients = await _postgreSQLRepository.GetAllClientsAsync();
+            var rooms = await _postgreSQLRepository.GetAllRoomsAsync();
+            var services = await _postgreSQLRepository.GetAllServicesAsync();
+            var reservations = await _postgreSQLRepository.GetAllReservationsAsync();
+            var reservationServices = await _postgreSQLRepository.GetAllReservationsServicesAsync();
+            var payments = await _postgreSQLRepository.GetAllPaymentsAsync();
+
+            var clientIdMap = clients.ToDictionary(c => c.Id, _ => Guid.NewGuid());
+            var roomIdMap = rooms.ToDictionary(r => r.Id, _ => Guid.NewGuid());
+            var serviceIdMap = services.ToDictionary(s => s.Id, _ => Guid.NewGuid());
+            var reservationIdMap = reservations.ToDictionary(r => r.Id, _ => Guid.NewGuid());
+            var paymentIdMap = payments.ToDictionary(p => p.Id, _ => Guid.NewGuid());
+
+            var cassandraClients = clients.Select(c => new CassandraClientDTO
+            {
+                Id = clientIdMap[c.Id],
+                FirstName = c.FirstName,
+                SecondName = c.SecondName,
+                LastName = c.LastName,
+                Email = c.Email,
+                DateOfBirth = c.BirthDate,
+                Address = c.Address,
+                PhoneNumber = c.PhoneNumber,
+                IsActive = c.IsActive
+            }).ToList();
+
+            var cassandraActiveClients = clients.Select(c => new CassandraActiveClientDTO
+            {
+                Id = clientIdMap[c.Id],
+                IsActive = c.IsActive,
+                FirstName = c.FirstName,
+                LastName = c.LastName,
+                Email = c.Email,
+                DateOfBirth = c.BirthDate,
+                Address = c.Address,
+                PhoneNumber = c.PhoneNumber
+            }).ToList();
+
+            await _cassandraRepository.InsertClientsBatchAsync(cassandraClients);
+            await _cassandraRepository.InsertActiveClientsBatchAsync(cassandraActiveClients);
+
+            var cassandraRooms = rooms.Select(r => new CassandraRoomDTO
+            {
+                Id = roomIdMap[r.Id],
+                Number = r.RoomNumber,
+                Capacity = r.Floor,
+                PricePerNight = r.Price,
+                IsActive = r.IsAvailable
+            }).ToList();
+
+            var cassandraActiveRooms = rooms.Select(r => new CassandraActiveRoomDTO
+            {
+                Id = roomIdMap[r.Id],
+                IsActive = r.IsAvailable,
+                Number = r.RoomNumber,
+                Capacity = r.Floor,
+                PricePerNight = r.Price
+            }).ToList();
+
+            await _cassandraRepository.InsertRoomsBatchAsync(cassandraRooms);
+            await _cassandraRepository.InsertActiveRoomsBatchAsync(cassandraActiveRooms);
+
+            var cassandraServices = services.Select(s => new CassandraServiceDTO
+            {
+                Id = serviceIdMap[s.Id],
+                Name = s.Name,
+                Price = s.Price,
+                IsActive = s.IsAvailable
+            }).ToList();
+
+            var cassandraActiveServices = services.Select(s => new CassandraActiveServiceDTO
+            {
+                Id = serviceIdMap[s.Id],
+                IsActive = s.IsAvailable,
+                Price = s.Price,
+                Name = s.Name
+            }).ToList();
+
+            await _cassandraRepository.InsertServicesBatchAsync(cassandraServices);
+            await _cassandraRepository.InsertActiveServicesBatchAsync(cassandraActiveServices);
+
+            var reservationsByClient = reservations.Select(res => new CassandraReservationByClientDTO
+            {
+                ClientId = clientIdMap[res.ClientId],
+                CreationDate = res.CreationDate,
+                ReservationId = reservationIdMap[res.Id],
+                RoomId = roomIdMap[res.RoomId],
+                CheckInDate = res.CheckInDate,
+                CheckOutDate = res.CheckOutDate
+            }).ToList();
+
+            var reservationsByRoom = reservations.Select(res => new CassandraReservationByRoomDTO
+            {
+                RoomId = roomIdMap[res.RoomId],
+                CreationDate = res.CreationDate,
+                ReservationId = reservationIdMap[res.Id],
+                ClientId = clientIdMap[res.ClientId],
+                CheckInDate = res.CheckInDate,
+                CheckOutDate = res.CheckOutDate
+            }).ToList();
+
+            await _cassandraRepository.InsertReservationsByClientBatchAsync(reservationsByClient);
+            await _cassandraRepository.InsertReservationsByRoomBatchAsync(reservationsByRoom);
+
+            var cassandraPayments = payments.Select(p => new CassandraPaymentDTO
+            {
+                ReservationId = reservationIdMap[p.ReservationId],
+                CreationDate = p.PaymentDate,
+                PaymentId = paymentIdMap[p.Id],
+                Description = p.Description,
+                Sum = p.Amount
+            }).ToList();
+
+            await _cassandraRepository.InsertPaymentsByReservationBatchAsync(cassandraPayments);
+
+            var rsByReservation = reservationServices.Select(rs => new CassandraReservationServiceByReservationDTO
+            {
+                ReservationId = reservationIdMap[rs.ReservationId],
+                ServiceId = serviceIdMap[rs.ServiceId],
+                CreationDate = rs.CreationDate
+            }).ToList();
+
+            var rsByService = reservationServices.Select(rs => new CassandraReservationServiceByServiceDTO
+            {
+                ServiceId = serviceIdMap[rs.ServiceId],
+                ReservationId = reservationIdMap[rs.ReservationId],
+                CreationDate = rs.CreationDate
+            }).ToList();
+
+            await _cassandraRepository.InsertReservationServicesByReservationBatchAsync(rsByReservation);
+            await _cassandraRepository.InsertReservationServicesByServiceBatchAsync(rsByService);
         }
     }
 }

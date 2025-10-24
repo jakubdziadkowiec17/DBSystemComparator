@@ -14,7 +14,7 @@ namespace DBSystemComparator_API.Models.Collections
         [BsonElement("checkInDate")]
         public DateTime CheckInDate { get; set; }
         [BsonElement("checkOutDate")]
-        public DateTime? CheckOutDate { get; set; }
+        public DateTime CheckOutDate { get; set; }
         [BsonElement("creationDate")]
         public DateTime CreationDate { get; set; }
         [BsonElement("services")]

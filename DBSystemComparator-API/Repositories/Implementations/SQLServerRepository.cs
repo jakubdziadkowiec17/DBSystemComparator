@@ -140,7 +140,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 SELECT DISTINCT c.Id, c.FirstName, c.LastName, c.Email
                 FROM Clients c
                 JOIN Reservations r ON r.ClientId = c.Id
-                WHERE r.CheckOutDate IS NULL OR r.CheckOutDate >= GETDATE()";
+                WHERE r.CheckOutDate >= GETDATE()";
 
             return ExecuteQueryAsync(sql);
         }
