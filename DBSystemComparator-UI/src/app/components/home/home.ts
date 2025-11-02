@@ -32,7 +32,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   timeData: { name: string, value: number }[] = [];
   ramUsageData: { name: string, value: number }[] = [];
   cpuUsageData: { name: string, value: number }[] = [];
-  view: [number, number] = [800, 300];
+  view: [number, number] = [240, 240];
   activeStep: number = 1;
   selectedScenario: ScenarioDTO | undefined;
   scenarios: ScenarioDTO[] = [];

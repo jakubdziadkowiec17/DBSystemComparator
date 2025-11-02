@@ -253,11 +253,43 @@ namespace DBSystemComparator_API.Repositories.Implementations
             return ExecuteNonQueryAsync(sql, parameters);
         }
 
-        public Task<int> DeleteUnusedServicesPriceBelowAsync(int price)
+        public async Task<int> DeleteUnusedServicesPriceBelowAsync(int price)
         {
-            var sql = @"DELETE FROM services WHERE price < @Price AND id NOT IN (SELECT DISTINCT serviceid FROM reservationsservices)";
-            var parameters = new Dictionary<string, object> { { "@price", price } };
-            return ExecuteNonQueryAsync(sql, parameters);
+            const int batchSize = 10000;
+            var totalDeleted = 0;
+
+            await using var connection = new NpgsqlConnection(_connectionString);
+            await connection.OpenAsync();
+
+            while (true)
+            {
+                var sql = @"
+                    WITH to_del AS (
+                        SELECT s.id
+                        FROM services s
+                        WHERE s.price < @Price
+                          AND NOT EXISTS (
+                              SELECT 1 FROM reservationsservices rs WHERE rs.serviceid = s.id
+                          )
+                        ORDER BY s.id
+                        LIMIT @Batch
+                    )
+                    DELETE FROM services s
+                    USING to_del d
+                    WHERE s.id = d.id;";
+
+                await using var cmd = new NpgsqlCommand(sql, connection);
+                cmd.Parameters.AddWithValue("@Price", price);
+                cmd.Parameters.AddWithValue("@Batch", batchSize);
+
+                var affected = await cmd.ExecuteNonQueryAsync();
+                totalDeleted += affected;
+
+                if (affected == 0)
+                    break;
+            }
+
+            return totalDeleted;
         }
 
         // HELPERS

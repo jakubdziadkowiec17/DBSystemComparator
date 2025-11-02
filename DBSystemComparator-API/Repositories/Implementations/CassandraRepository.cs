@@ -450,13 +450,13 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 var chunkList = roomChunk.ToList();
                 var placeholders = string.Join(", ", Enumerable.Repeat("?", chunkList.Count));
                 var args = new List<object>(chunkList.Cast<object>()) { threshold };
-                var resRs = await _session.ExecuteAsync(new SimpleStatement(
+                var resStmt = new SimpleStatement(
                     $"SELECT reservationid FROM reservations_by_room WHERE roomid IN ({placeholders}) AND checkindate < ? ALLOW FILTERING",
-                    args.ToArray()));
+                    args.ToArray());
+                resStmt.SetPageSize(5000);
+                var resRs = await _session.ExecuteAsync(resStmt);
                 foreach (var row in resRs)
-                {
                     reservationIds.Add(row.GetValue<Guid>("reservationid"));
-                }
             }
 
             if (reservationIds.Count == 0)
@@ -465,39 +465,42 @@ namespace DBSystemComparator_API.Repositories.Implementations
             int deleted = 0;
             var deleteStatements = new List<SimpleStatement>();
 
-            const int resChunkSize = 200;
+            const int resChunkSize = 500;
             var reservationsList = reservationIds.ToList();
             for (int i = 0; i < reservationsList.Count; i += resChunkSize)
             {
                 var chunk = reservationsList.Skip(i).Take(resChunkSize).ToList();
 
-                var fetchTasks = chunk.Select(resId =>
-                    _session.ExecuteAsync(new SimpleStatement(
-                        "SELECT serviceid FROM reservations_services_by_reservation WHERE reservationid = ?",
-                        resId))).ToList();
+                var placeholders = string.Join(", ", Enumerable.Repeat("?", chunk.Count));
+                var selectRsStmt = new SimpleStatement(
+                    $"SELECT reservationid, serviceid FROM reservations_services_by_reservation WHERE reservationid IN ({placeholders})",
+                    chunk.Cast<object>().ToArray());
+                selectRsStmt.SetPageSize(5000);
+                var mapRows = await _session.ExecuteAsync(selectRsStmt);
 
-                var results = await Task.WhenAll(fetchTasks);
-
-                for (int j = 0; j < results.Length; j++)
+                var seenReservations = new HashSet<Guid>();
+                foreach (var row in mapRows)
                 {
-                    var resId = chunk[j];
-                    var rs = results[j];
-                    foreach (var row in rs)
-                    {
-                        var serviceId = row.GetValue<Guid>("serviceid");
-                        deleteStatements.Add(new SimpleStatement(
-                            "DELETE FROM reservations_services_by_reservation WHERE reservationid = ? AND serviceid = ?",
-                            resId, serviceId));
-                        deleteStatements.Add(new SimpleStatement(
-                            "DELETE FROM reservations_services_by_service WHERE serviceid = ? AND reservationid = ?",
-                            serviceId, resId));
-                        deleted++;
+                    var resId = row.GetValue<Guid>("reservationid");
+                    var serviceId = row.GetValue<Guid>("serviceid");
 
-                        if (deleteStatements.Count >= 1000)
-                        {
-                            await ExecuteInChunksAsync(deleteStatements);
-                            deleteStatements.Clear();
-                        }
+                    deleteStatements.Add(new SimpleStatement(
+                        "DELETE FROM reservations_services_by_service WHERE serviceid = ? AND reservationid = ?",
+                        serviceId, resId));
+
+                    deleted++;
+
+                    if (deleteStatements.Count >= 1000)
+                    {
+                        await ExecuteInChunksAsync(deleteStatements);
+                        deleteStatements.Clear();
+                    }
+
+                    if (seenReservations.Add(resId))
+                    {
+                        deleteStatements.Add(new SimpleStatement(
+                            "DELETE FROM reservations_services_by_reservation WHERE reservationid = ?",
+                            resId));
                     }
                 }
 

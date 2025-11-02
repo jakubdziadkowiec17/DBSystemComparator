@@ -101,12 +101,12 @@
                       </div>
                   </div>
 
-                  <div class="mt-5" *ngIf="timeData.length > 0 || ramUsageData.length > 0 || cpuUsageData.length > 0">
-                    <p-message severity="info" class="flex flex-col mt-1 mb-8">
-                      <div class="small-info w-1/4 mx-auto text-center">
-                        <div class="small-info mb-2" *ngFor="let db of getMetricsByDatabase()">
+                  <div class="mt-1" *ngIf="timeData.length > 0 || ramUsageData.length > 0 || cpuUsageData.length > 0">
+                    <p-message severity="info" class="flex flex-col mt-1 mb-4">
+                      <div class="small-info mx-auto flex gap-4 justify-center">
+                        <div class="small-info" *ngFor="let db of getMetricsByDatabase()">
                           <strong class="underline">{{ db.dbName }}</strong>
-                          <div class="ml-4 list-disc text-left">
+                          <div class="list-disc text-left">
                             <p *ngIf="db.time !== undefined">Time: <b>{{ db.time }} s</b></p>
                             <p *ngIf="db.ram !== undefined">RAM usage: <b>{{ db.ram }} MB</b></p>
                             <p *ngIf="db.cpu !== undefined">CPU usage: <b>{{ db.cpu }}%</b></p>
@@ -114,50 +114,52 @@
                         </div>
                       </div>
                     </p-message>
-                    <div #timeContainer class="chart-container mb-9">
-                      <ngx-charts-bar-vertical
-                        [view]="view"
-                        [results]="timeData"
-                        [xAxis]="true"
-                        [yAxis]="true"
-                        [legend]="false"
-                        [showXAxisLabel]="true"
-                        [showYAxisLabel]="true"
-                        [xAxisLabel]="'Database'"
-                        [yAxisLabel]="'Time [s]'"
-                        [roundDomains]="true"
-                        [animations]="false">
-                      </ngx-charts-bar-vertical>
-                    </div>
-                    <div #ramUsageContainer class="chart-container mb-9">
-                      <ngx-charts-bar-vertical
-                        [view]="view"
-                        [results]="ramUsageData"
-                        [xAxis]="true"
-                        [yAxis]="true"
-                        [legend]="false"
-                        [showXAxisLabel]="true"
-                        [showYAxisLabel]="true"
-                        [xAxisLabel]="'Database'"
-                        [yAxisLabel]="'RAM usage [MB]'"
-                        [roundDomains]="true"
-                        [animations]="false">
-                      </ngx-charts-bar-vertical>
-                    </div>
-                    <div #cpuUsageContainer class="chart-container mb-3">
-                      <ngx-charts-bar-vertical
-                        [view]="view"
-                        [results]="cpuUsageData"
-                        [xAxis]="true"
-                        [yAxis]="true"
-                        [legend]="false"
-                        [showXAxisLabel]="true"
-                        [showYAxisLabel]="true"
-                        [xAxisLabel]="'Database'"
-                        [yAxisLabel]="'CPU usage [%]'"
-                        [roundDomains]="true"
-                        [animations]="false">
-                      </ngx-charts-bar-vertical>
+                    <div class="flex gap-6 justify-center mb-2">
+                      <div #timeContainer class="chart-container">
+                        <ngx-charts-bar-vertical
+                          [view]="view"
+                          [results]="timeData"
+                          [xAxis]="true"
+                          [yAxis]="true"
+                          [legend]="false"
+                          [showXAxisLabel]="true"
+                          [showYAxisLabel]="true"
+                          [xAxisLabel]="'Database'"
+                          [yAxisLabel]="'Time [s]'"
+                          [roundDomains]="true"
+                          [animations]="false">
+                        </ngx-charts-bar-vertical>
+                      </div>
+                      <div #ramUsageContainer class="chart-container">
+                        <ngx-charts-bar-vertical
+                          [view]="view"
+                          [results]="ramUsageData"
+                          [xAxis]="true"
+                          [yAxis]="true"
+                          [legend]="false"
+                          [showXAxisLabel]="true"
+                          [showYAxisLabel]="true"
+                          [xAxisLabel]="'Database'"
+                          [yAxisLabel]="'RAM usage [MB]'"
+                          [roundDomains]="true"
+                          [animations]="false">
+                        </ngx-charts-bar-vertical>
+                      </div>
+                      <div #cpuUsageContainer class="chart-container">
+                        <ngx-charts-bar-vertical
+                          [view]="view"
+                          [results]="cpuUsageData"
+                          [xAxis]="true"
+                          [yAxis]="true"
+                          [legend]="false"
+                          [showXAxisLabel]="true"
+                          [showYAxisLabel]="true"
+                          [xAxisLabel]="'Database'"
+                          [yAxisLabel]="'CPU usage [%]'"
+                          [roundDomains]="true"
+                          [animations]="false">
+                        </ngx-charts-bar-vertical>
+                      </div>
                     </div>
                   </div>
                 </div>

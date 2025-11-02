@@ -56,7 +56,6 @@ namespace DBSystemComparator_API.Services.Implementations
 
                 double time = stopwatch.Elapsed.TotalSeconds;
 
-                double ramDelta = ramAfter - ramBefore;
                 double ramUsage = (ramAfter - ramBefore) / (1024.0 * 1024.0);
 
                 var cpuDelta = (cpuAfter - cpuBefore).TotalSeconds;
