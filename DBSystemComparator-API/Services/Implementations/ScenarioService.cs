@@ -23,6 +23,7 @@ namespace DBSystemComparator_API.Services.Implementations
         public async Task<MetricsDTO> TestScenarioAsync(SelectedScenarioDTO selectedScenarioDTO)
         {
             var scenarios = SCENARIOS.ALL;
+            
             var selectedScenario = scenarios.FirstOrDefault(a => a.Id == selectedScenarioDTO.Id);
             if (selectedScenario is null) throw new Exception(ERROR.SELECTED_INCORRECT_SCENARIO);
 
