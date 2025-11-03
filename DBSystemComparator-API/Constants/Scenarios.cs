@@ -26,13 +26,13 @@ namespace DBSystemComparator_API.Constants
         public static readonly ScenarioDTO CREATE_4 = new ScenarioDTO
         {
             Id = 4,
-            Description = "Adding 500 new clients asynchronously.",
+            Description = "Adding 500 new clients.",
             OperationId = (int)OPERATION.CREATE
         };
         public static readonly ScenarioDTO CREATE_5 = new ScenarioDTO
         {
             Id = 5,
-            Description = "Adding 500 new rooms asynchronously.",
+            Description = "Adding 500 new rooms.",
             OperationId = (int)OPERATION.CREATE
         };
 

@@ -73,22 +73,24 @@ namespace DBSystemComparator_API.Repositories.Implementations
 
         public async Task<List<int>> CreateClientsAsync(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive, int count)
         {
-            var tasks = new List<Task<int>>();
+            var clients = new List<(string firstName, string secondName, string lastName, string email, DateTime dob, string address, string phone, bool isActive)>();
             for (int i = 0; i < count; i++)
-                tasks.Add(CreateClientAsync(firstName, secondName, lastName, email, dob, address, phone, isActive));
-
-            var results = await Task.WhenAll(tasks);
-            return results.ToList();
+            {
+                clients.Add((firstName, secondName, lastName, email, dob, address, phone, isActive));
+            }
+            await CreateClientsBatchAsync(clients);
+            return Enumerable.Repeat(0, count).ToList();
         }
 
         public async Task<List<int>> CreateRoomsAsync(int number, int capacity, double pricePerNight, bool isActive, int count)
         {
-            var tasks = new List<Task<int>>();
+            var rooms = new List<(int number, int capacity, double pricePerNight, bool isActive)>();
             for (int i = 0; i < count; i++)
-                tasks.Add(CreateRoomAsync(number, capacity, pricePerNight, isActive));
-
-            var results = await Task.WhenAll(tasks);
-            return results.ToList();
+            {
+                rooms.Add((number, capacity, pricePerNight, isActive));
+            }
+            await CreateRoomsBatchAsync(rooms);
+            return Enumerable.Repeat(0, count).ToList();
         }
 
         // READ
