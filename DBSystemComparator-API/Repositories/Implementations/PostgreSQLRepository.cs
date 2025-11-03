@@ -32,7 +32,6 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Phone", phone},
                 {"@IsActive", isActive}
             };
-
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
@@ -50,7 +49,6 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Price", pricePerNight},
                 {"@IsActive", isActive}
             };
-
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
@@ -67,7 +65,6 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Price", price},
                 {"@IsActive", isActive}
             };
-
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
