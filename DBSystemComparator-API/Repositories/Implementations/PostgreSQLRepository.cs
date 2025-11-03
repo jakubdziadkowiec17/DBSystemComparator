@@ -32,6 +32,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Phone", phone},
                 {"@IsActive", isActive}
             };
+            
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
@@ -49,6 +50,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Price", pricePerNight},
                 {"@IsActive", isActive}
             };
+            
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
@@ -65,6 +67,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 {"@Price", price},
                 {"@IsActive", isActive}
             };
+            
             return ExecuteScalarAsync<int>(sql, parameters);
         }
 
@@ -76,6 +79,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 clients.Add((firstName, secondName, lastName, email, dob, address, phone, isActive));
             }
             await CreateClientsBatchAsync(clients);
+            
             return Enumerable.Repeat(0, count).ToList();
         }
 
@@ -87,6 +91,7 @@ namespace DBSystemComparator_API.Repositories.Implementations
                 rooms.Add((number, capacity, pricePerNight, isActive));
             }
             await CreateRoomsBatchAsync(rooms);
+            
             return Enumerable.Repeat(0, count).ToList();
         }
 
